@@ -178,21 +178,6 @@
         vlan_id: "{{ network_info.networks[0].provider_segmentation_id }}"
 
     #################################################################
-    # Validate VLAN ID Range
-    #################################################################
-
-    - name: Validate VLAN ID is in Alteon Accepted Range
-
-      assert:
-        that:
-          - vlan_id | int >= 5
-          - vlan_id | int <= 259
-        fail_msg: >-
-          VLAN ID {{ vlan_id }} is out of Alteon accepted range [5-259].
-          Please check the OpenStack network provider_segmentation_id.
-        success_msg: "VLAN ID {{ vlan_id }} is valid."
-
-    #################################################################
     # Display VLAN ID
     #################################################################
 
