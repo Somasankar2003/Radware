@@ -1,0 +1,64 @@
+heat_template_version: 2018-08-31
+
+description: Radware Alteon VM Deployment
+
+parameters:
+
+  vm_name:
+    type: string
+
+  network_ids:
+    type: comma_delimited_list
+
+resources:
+
+  server:
+    type: OS::Nova::Server
+
+    properties:
+
+      name: { get_param: vm_name }
+
+      flavor: cmp
+
+      block_device_mapping_v2:
+
+        - boot_index: 0
+          delete_on_termination: true
+          image_id: e55fd668-e568-47d6-b13f-448f25a8305e
+          volume_size: 30
+
+      networks:
+
+        #################################################################
+        # Interface-1 → Management
+        #################################################################
+
+        - network:
+            list_join:
+              - ''
+              - - { get_param: [network_ids, 0] }
+
+        #################################################################
+        # Interface-2 → Data
+        #################################################################
+
+        - network:
+            list_join:
+              - ''
+              - - { get_param: [network_ids, 1] }
+
+        #################################################################
+        # Interface-3 → Data
+        #################################################################
+
+        - network:
+            list_join:
+              - ''
+              - - { get_param: [network_ids, 2] }
+
+outputs:
+
+  vm_id:
+    description: VM UUID
+    value: { get_resource: server }
