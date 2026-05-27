@@ -1,0 +1,317 @@
+---
+- name: Deploy and Configure Radware Alteon
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+
+    #################################################################
+    # OpenStack Authentication
+    #################################################################
+
+    os_auth_url: "http://192.168.170.50:5000"
+    os_username: "admin"
+    os_password: "bLEZFvatBShkvUZyKrasUjmNdTTc9c3HcxWykrro"
+
+    os_project_name: "{{ project_name }}"
+
+    os_project_domain_id: "default"
+    os_user_domain_name: "Default"
+
+    #################################################################
+    # Alteon Credentials
+    #################################################################
+
+    alteon_username: "admin"
+    alteon_password: "admin"
+
+    #################################################################
+    # VLAN Configuration
+    #################################################################
+
+    vlan_id: 10
+
+  tasks:
+
+    #################################################################
+    # Deploy Heat Stack
+    #################################################################
+
+    - name: Deploy Heat Stack
+
+      openstack.cloud.stack:
+
+        state: present
+        name: "{{ vm_name }}"
+        template: "radware_template.yaml"
+
+        wait: true
+        timeout: 1200
+        api_timeout: 60
+
+        auth:
+          auth_url: "{{ os_auth_url }}"
+          username: "{{ os_username }}"
+          password: "{{ os_password }}"
+          project_name: "{{ os_project_name }}"
+          project_domain_id: "{{ os_project_domain_id }}"
+          user_domain_name: "{{ os_user_domain_name }}"
+
+        parameters:
+
+          vm_name: "{{ vm_name }}"
+
+          network_ids: >-
+            {{
+              network_ids.split(',')
+              | map('trim')
+              | list
+            }}
+
+        validate_certs: false
+
+      register: stack_result
+
+    #################################################################
+    # Show Stack Result
+    #################################################################
+
+    - name: Show Stack Result
+
+      debug:
+        var: stack_result
+
+    #################################################################
+    # Fetch VM Information
+    #################################################################
+
+    - name: Fetch VM Information
+
+      openstack.cloud.server_info:
+
+        auth:
+          auth_url: "{{ os_auth_url }}"
+          username: "{{ os_username }}"
+          password: "{{ os_password }}"
+          project_name: "{{ os_project_name }}"
+          project_domain_id: "{{ os_project_domain_id }}"
+          user_domain_name: "{{ os_user_domain_name }}"
+
+        server: "{{ vm_name }}"
+
+      register: vm_info
+
+    #################################################################
+    # Extract Interface IPs
+    #################################################################
+
+    - name: Extract Interface IP Addresses
+
+      set_fact:
+
+        management_ip: >-
+          {{
+            vm_info.servers[0].addresses[
+              network_ids.split(',')[0]
+            ][0].addr
+          }}
+
+        interface2_ip: >-
+          {{
+            vm_info.servers[0].addresses[
+              network_ids.split(',')[1]
+            ][0].addr
+          }}
+
+        interface3_ip: >-
+          {{
+            vm_info.servers[0].addresses[
+              network_ids.split(',')[2]
+            ][0].addr
+          }}
+
+    #################################################################
+    # Display Interface Information
+    #################################################################
+
+    - name: Display Interface IPs
+
+      debug:
+        msg:
+          - "Management IP : {{ management_ip }}"
+          - "Interface-2 IP : {{ interface2_ip }}"
+          - "Interface-3 IP : {{ interface3_ip }}"
+
+    #################################################################
+    # Wait for Alteon API
+    #################################################################
+
+    - name: Wait for Alteon HTTPS API
+
+      wait_for:
+        host: "{{ management_ip }}"
+        port: 443
+        timeout: 900
+
+    #################################################################
+    # Configure VLAN
+    #################################################################
+
+    - name: Configure VLAN
+
+      radware.radware_modules.alteon_config_l2_vlan:
+
+        provider:
+          server: "{{ management_ip }}"
+          user: "{{ alteon_username }}"
+          password: "{{ alteon_password }}"
+          validate_certs: false
+          https_port: 443
+          ssh_port: 22
+          timeout: 5
+
+        state: present
+
+        parameters:
+          index: "{{ vlan_id }}"
+          state: enabled
+          name: "VLAN-{{ vlan_id }}"
+
+    #################################################################
+    # Configure Layer3 Interface 2
+    #################################################################
+
+    - name: Configure Layer3 Interface 2
+
+      radware.radware_modules.alteon_config_l3_interface:
+
+        provider:
+          server: "{{ management_ip }}"
+          user: "{{ alteon_username }}"
+          password: "{{ alteon_password }}"
+          validate_certs: false
+          https_port: 443
+          ssh_port: 22
+          timeout: 5
+
+        state: present
+
+        parameters:
+          index: 2
+          state: enabled
+          ip4_address: "{{ interface2_ip }}"
+          ip4_subnet: "255.255.255.0"
+          ip_ver: ipv4
+          vlan: "{{ vlan_id }}"
+          bootp_relay: disabled
+
+    #################################################################
+    # Configure Layer3 Interface 3
+    #################################################################
+
+    - name: Configure Layer3 Interface 3
+
+      radware.radware_modules.alteon_config_l3_interface:
+
+        provider:
+          server: "{{ management_ip }}"
+          user: "{{ alteon_username }}"
+          password: "{{ alteon_password }}"
+          validate_certs: false
+          https_port: 443
+          ssh_port: 22
+          timeout: 5
+
+        state: present
+
+        parameters:
+          index: 3
+          state: enabled
+          ip4_address: "{{ interface3_ip }}"
+          ip4_subnet: "255.255.255.0"
+          ip_ver: ipv4
+          vlan: "{{ vlan_id }}"
+          bootp_relay: disabled
+
+    #################################################################
+    # Configure Default Gateway
+    #################################################################
+
+    - name: Configure Default Gateway
+
+      radware.radware_modules.alteon_config_l3_gateway:
+
+        provider:
+          server: "{{ management_ip }}"
+          user: "{{ alteon_username }}"
+          password: "{{ alteon_password }}"
+          validate_certs: false
+          https_port: 443
+          ssh_port: 22
+          timeout: 5
+
+        state: present
+
+        parameters:
+          index: 1
+          state: enabled
+          ip4_address: "{{ gateway_ip }}"
+          ip_ver: ipv4
+          vlan: 5
+          health_check_type: icmp
+          health_check_interval_second: 30
+          health_check_retries: 3
+          route_priority: high
+          global_gateway_metric: roundrobin
+
+    #################################################################
+    # Apply Alteon Configuration
+    #################################################################
+
+    - name: Apply Alteon Configuration
+
+      uri:
+        url: "https://{{ management_ip }}/config?action=apply"
+        method: POST
+
+        user: "{{ alteon_username }}"
+        password: "{{ alteon_password }}"
+
+        force_basic_auth: true
+        validate_certs: false
+
+        status_code: 200
+
+    #################################################################
+    # Save Alteon Configuration
+    #################################################################
+
+    - name: Save Alteon Configuration
+
+      uri:
+        url: "https://{{ management_ip }}/config?action=save"
+        method: POST
+
+        user: "{{ alteon_username }}"
+        password: "{{ alteon_password }}"
+
+        force_basic_auth: true
+        validate_certs: false
+
+        status_code: 200
+
+    #################################################################
+    # Final Deployment Status
+    #################################################################
+
+    - name: Deployment Completed
+
+      debug:
+        msg:
+          - "Radware Alteon Deployment Successful"
+          - "Management IP : {{ management_ip }}"
+          - "Interface-2 IP : {{ interface2_ip }}"
+          - "Interface-3 IP : {{ interface3_ip }}"
+          - "Gateway Configured : {{ gateway_ip }}"
+          - "Configuration Applied Successfully"
+          - "Configuration Saved Successfully"
