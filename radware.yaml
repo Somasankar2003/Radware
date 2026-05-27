@@ -11,7 +11,7 @@
 
     os_auth_url: "http://192.168.170.50:5000"
     os_username: "admin"
-    os_password: "bLEZFvatBShkvUZyKrasUjmNdTTc9c3HcxWykrro"
+    os_password: "PASSWORD"
 
     os_project_name: "{{ project_name }}"
 
@@ -24,12 +24,6 @@
 
     alteon_username: "admin"
     alteon_password: "admin"
-
-    #################################################################
-    # VLAN Configuration
-    #################################################################
-
-    vlan_id: 10
 
   tasks:
 
@@ -112,21 +106,21 @@
         management_ip: >-
           {{
             vm_info.servers[0].addresses[
-              network_ids.split(',')[0]
+              network_ids.split(',')[0] | trim
             ][0].addr
           }}
 
         interface2_ip: >-
           {{
             vm_info.servers[0].addresses[
-              network_ids.split(',')[1]
+              network_ids.split(',')[1] | trim
             ][0].addr
           }}
 
         interface3_ip: >-
           {{
             vm_info.servers[0].addresses[
-              network_ids.split(',')[2]
+              network_ids.split(',')[2] | trim
             ][0].addr
           }}
 
@@ -138,9 +132,47 @@
 
       debug:
         msg:
-          - "Management IP : {{ management_ip }}"
+          - "Management IP  : {{ management_ip }}"
           - "Interface-2 IP : {{ interface2_ip }}"
           - "Interface-3 IP : {{ interface3_ip }}"
+
+    #################################################################
+    # Fetch Network VLAN Info from OpenStack
+    #################################################################
+
+    - name: Fetch Network VLAN Info
+
+      openstack.cloud.networks_info:
+
+        auth:
+          auth_url: "{{ os_auth_url }}"
+          username: "{{ os_username }}"
+          password: "{{ os_password }}"
+          project_name: "{{ os_project_name }}"
+          project_domain_id: "{{ os_project_domain_id }}"
+          user_domain_name: "{{ os_user_domain_name }}"
+
+        name: "{{ network_ids.split(',')[1] | trim }}"
+
+      register: network_info
+
+    #################################################################
+    # Extract VLAN ID from Network Info
+    #################################################################
+
+    - name: Extract VLAN ID
+
+      set_fact:
+        vlan_id: "{{ network_info.networks[0].provider_segmentation_id }}"
+
+    #################################################################
+    # Display VLAN ID
+    #################################################################
+
+    - name: Display VLAN ID
+
+      debug:
+        msg: "Auto-fetched VLAN ID : {{ vlan_id }}"
 
     #################################################################
     # Wait for Alteon API
@@ -257,7 +289,7 @@
           state: enabled
           ip4_address: "{{ gateway_ip }}"
           ip_ver: ipv4
-          vlan: 5
+          vlan: "{{ vlan_id }}"          # Fixed: was hardcoded to 5
           health_check_type: icmp
           health_check_interval_second: 30
           health_check_retries: 3
@@ -309,9 +341,10 @@
       debug:
         msg:
           - "Radware Alteon Deployment Successful"
-          - "Management IP : {{ management_ip }}"
+          - "Management IP  : {{ management_ip }}"
           - "Interface-2 IP : {{ interface2_ip }}"
           - "Interface-3 IP : {{ interface3_ip }}"
           - "Gateway Configured : {{ gateway_ip }}"
+          - "VLAN ID Used       : {{ vlan_id }}"
           - "Configuration Applied Successfully"
           - "Configuration Saved Successfully"
