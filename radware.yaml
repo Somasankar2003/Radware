@@ -11,7 +11,7 @@
 
     os_auth_url: "http://192.168.170.50:5000"
     os_username: "admin"
-    os_password: "bLEZFvatBShkvUZyKrasUjmNdTTc9c3HcxWykrro"
+    os_password: "PASSWORD"
 
     os_project_name: "{{ project_name }}"
 
@@ -106,41 +106,29 @@
         management_ip: >-
           {{
             vm_info.servers[0].addresses[
-              network_ids.split(',')[0] | trim
+              network_ids.split(',')[0]
             ][0].addr
           }}
 
         interface2_ip: >-
           {{
             vm_info.servers[0].addresses[
-              network_ids.split(',')[1] | trim
+              network_ids.split(',')[1]
             ][0].addr
           }}
 
         interface3_ip: >-
           {{
             vm_info.servers[0].addresses[
-              network_ids.split(',')[2] | trim
+              network_ids.split(',')[2]
             ][0].addr
           }}
 
     #################################################################
-    # Display Interface Information
+    # Automatically Fetch VLAN ID From OpenStack Network
     #################################################################
 
-    - name: Display Interface IPs
-
-      debug:
-        msg:
-          - "Management IP  : {{ management_ip }}"
-          - "Interface-2 IP : {{ interface2_ip }}"
-          - "Interface-3 IP : {{ interface3_ip }}"
-
-    #################################################################
-    # Fetch Network VLAN Info from OpenStack
-    #################################################################
-
-    - name: Fetch Network VLAN Info
+    - name: Fetch Network Information
 
       openstack.cloud.networks_info:
 
@@ -152,39 +140,42 @@
           project_domain_id: "{{ os_project_domain_id }}"
           user_domain_name: "{{ os_user_domain_name }}"
 
-        name: "{{ network_ids.split(',')[1] | trim }}"
-
       register: network_info
 
     #################################################################
-    # Debug Network Info
-    #################################################################
-
-    - name: Debug Network Info
-
-      debug:
-        msg:
-          - "Network Name    : {{ network_info.networks[0].name }}"
-          - "Segmentation ID : {{ network_info.networks[0].provider_segmentation_id }}"
-          - "Network Type    : {{ network_info.networks[0].provider_network_type }}"
-
-    #################################################################
-    # Extract VLAN ID from Network Info
+    # Extract VLAN ID Automatically
     #################################################################
 
     - name: Extract VLAN ID
 
       set_fact:
-        vlan_id: "{{ network_info.networks[0].provider_segmentation_id }}"
+
+        vlan_id: >-
+          {{
+            (
+              network_info.networks
+              | selectattr(
+                  'id',
+                  'equalto',
+                  network_ids.split(',')[1]
+                )
+              | list
+              | first
+            ).provider_segmentation_id
+          }}
 
     #################################################################
-    # Display VLAN ID
+    # Display Interface Information
     #################################################################
 
-    - name: Display VLAN ID
+    - name: Display Interface IPs
 
       debug:
-        msg: "Auto-fetched VLAN ID : {{ vlan_id }}"
+        msg:
+          - "Management IP : {{ management_ip }}"
+          - "Interface-2 IP : {{ interface2_ip }}"
+          - "Interface-3 IP : {{ interface3_ip }}"
+          - "Detected VLAN ID : {{ vlan_id }}"
 
     #################################################################
     # Wait for Alteon API
@@ -353,10 +344,10 @@
       debug:
         msg:
           - "Radware Alteon Deployment Successful"
-          - "Management IP  : {{ management_ip }}"
+          - "Management IP : {{ management_ip }}"
           - "Interface-2 IP : {{ interface2_ip }}"
           - "Interface-3 IP : {{ interface3_ip }}"
+          - "Detected VLAN ID : {{ vlan_id }}"
           - "Gateway Configured : {{ gateway_ip }}"
-          - "VLAN ID Used       : {{ vlan_id }}"
           - "Configuration Applied Successfully"
           - "Configuration Saved Successfully"
