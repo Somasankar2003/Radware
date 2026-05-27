@@ -157,6 +157,18 @@
       register: network_info
 
     #################################################################
+    # Debug Network Info
+    #################################################################
+
+    - name: Debug Network Info
+
+      debug:
+        msg:
+          - "Network Name    : {{ network_info.networks[0].name }}"
+          - "Segmentation ID : {{ network_info.networks[0].provider_segmentation_id }}"
+          - "Network Type    : {{ network_info.networks[0].provider_network_type }}"
+
+    #################################################################
     # Extract VLAN ID from Network Info
     #################################################################
 
@@ -164,6 +176,21 @@
 
       set_fact:
         vlan_id: "{{ network_info.networks[0].provider_segmentation_id }}"
+
+    #################################################################
+    # Validate VLAN ID Range
+    #################################################################
+
+    - name: Validate VLAN ID is in Alteon Accepted Range
+
+      assert:
+        that:
+          - vlan_id | int >= 5
+          - vlan_id | int <= 259
+        fail_msg: >-
+          VLAN ID {{ vlan_id }} is out of Alteon accepted range [5-259].
+          Please check the OpenStack network provider_segmentation_id.
+        success_msg: "VLAN ID {{ vlan_id }} is valid."
 
     #################################################################
     # Display VLAN ID
@@ -289,7 +316,7 @@
           state: enabled
           ip4_address: "{{ gateway_ip }}"
           ip_ver: ipv4
-          vlan: "{{ vlan_id }}"          # Fixed: was hardcoded to 5
+          vlan: "{{ vlan_id }}"
           health_check_type: icmp
           health_check_interval_second: 30
           health_check_retries: 3
