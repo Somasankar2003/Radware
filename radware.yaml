@@ -11,7 +11,7 @@
 
     os_auth_url: "http://192.168.170.50:5000"
     os_username: "admin"
-    os_password: "bLEZFvatBShkvUZyKrasUjmNdTTc9c3HcxWykrro"
+    os_password: "PASSWORD"
 
     os_project_name: "{{ project_name }}"
 
@@ -173,6 +173,9 @@
 
         state: present
 
+        apply: true
+        save: true
+
         parameters:
           index: "{{ vlan_id }}"
           state: enabled
@@ -196,6 +199,9 @@
           timeout: 5
 
         state: present
+
+        apply: true
+        save: true
 
         parameters:
           index: 2
@@ -225,6 +231,9 @@
 
         state: present
 
+        apply: true
+        save: true
+
         parameters:
           index: 3
           state: enabled
@@ -253,6 +262,9 @@
 
         state: present
 
+        apply: true
+        save: true
+
         parameters:
           index: 6
           state: enabled
@@ -264,44 +276,6 @@
           health_check_retries: 3
           route_priority: high
           global_gateway_metric: roundrobin
-
-    #################################################################
-    # Apply Configuration
-    #################################################################
-
-    - name: Apply Configuration
-
-      radware.radware_modules.alteon_config_action:
-
-        provider:
-          server: "{{ management_ip }}"
-          user: "{{ alteon_username }}"
-          password: "{{ alteon_password }}"
-          validate_certs: false
-          https_port: 443
-          ssh_port: 22
-          timeout: 5
-
-        action: apply
-
-    #################################################################
-    # Save Configuration
-    #################################################################
-
-    - name: Save Configuration
-
-      radware.radware_modules.alteon_config_action:
-
-        provider:
-          server: "{{ management_ip }}"
-          user: "{{ alteon_username }}"
-          password: "{{ alteon_password }}"
-          validate_certs: false
-          https_port: 443
-          ssh_port: 22
-          timeout: 5
-
-        action: save
 
     #################################################################
     # Final Deployment Status
