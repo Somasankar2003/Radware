@@ -11,7 +11,7 @@
 
     os_auth_url: "http://192.168.170.50:5000"
     os_username: "admin"
-    os_password: "bLEZFvatBShkvUZyKrasUjmNdTTc9c3HcxWykrro"
+    os_password: "PASSWORD"
 
     os_project_name: "{{ project_name }}"
 
@@ -173,8 +173,7 @@
 
         state: present
 
-        apply: true
-        save: true
+        write_on_change: true
 
         parameters:
           index: "{{ vlan_id }}"
@@ -200,8 +199,7 @@
 
         state: present
 
-        apply: true
-        save: true
+        write_on_change: true
 
         parameters:
           index: 2
@@ -231,8 +229,7 @@
 
         state: present
 
-        apply: true
-        save: true
+        write_on_change: true
 
         parameters:
           index: 3
@@ -262,8 +259,7 @@
 
         state: present
 
-        apply: true
-        save: true
+        write_on_change: true
 
         parameters:
           index: 6
