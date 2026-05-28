@@ -102,7 +102,7 @@
       register: vm_info
 
     #################################################################
-    # Extract Interface IPs
+    # Extract Interface IP Addresses
     #################################################################
 
     - name: Extract Interface IP Addresses
@@ -173,8 +173,6 @@
 
         state: present
 
-        write_on_change: true
-
         parameters:
           index: "{{ vlan_id }}"
           state: enabled
@@ -198,8 +196,6 @@
           timeout: 5
 
         state: present
-
-        write_on_change: true
 
         parameters:
           index: 2
@@ -229,8 +225,6 @@
 
         state: present
 
-        write_on_change: true
-
         parameters:
           index: 3
           state: enabled
@@ -259,8 +253,6 @@
 
         state: present
 
-        write_on_change: true
-
         parameters:
           index: 6
           state: enabled
@@ -272,6 +264,40 @@
           health_check_retries: 3
           route_priority: high
           global_gateway_metric: roundrobin
+
+    #################################################################
+    # Apply Alteon Configuration
+    #################################################################
+
+    - name: Apply Alteon Configuration
+
+      radware.radware_modules.alteon_mng_config:
+
+        provider:
+          server: "{{ management_ip }}"
+          user: "{{ alteon_username }}"
+          password: "{{ alteon_password }}"
+          validate_certs: false
+          https_port: 443
+
+        command: apply
+
+    #################################################################
+    # Save Alteon Configuration
+    #################################################################
+
+    - name: Save Alteon Configuration
+
+      radware.radware_modules.alteon_mng_config:
+
+        provider:
+          server: "{{ management_ip }}"
+          user: "{{ alteon_username }}"
+          password: "{{ alteon_password }}"
+          validate_certs: false
+          https_port: 443
+
+        command: save
 
     #################################################################
     # Final Deployment Status
@@ -289,3 +315,4 @@
           - "Gateway Configured : {{ gateway_ip }}"
           - "Configuration Applied Successfully"
           - "Configuration Saved Successfully"
+
