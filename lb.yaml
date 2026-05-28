@@ -1,3 +1,4 @@
+
 ---
 - name: Configure Alteon Dynamic Real Servers and Server Group
   hosts: localhost
@@ -50,6 +51,7 @@
             - 8081
 
       loop: "{{ real_server_ip_list }}"
+
       loop_control:
         extended: true
 
@@ -69,6 +71,7 @@
           }}
 
       loop: "{{ real_server_ip_list }}"
+
       loop_control:
         extended: true
 
@@ -94,13 +97,12 @@
         parameters:
           index: "{{ server_group_name }}"
           slb_metric: "{{ slb_metric }}"
-          slow_start_time_second: 60
           persist_overload_max_conn_server: enabled
 
           server_names: "{{ generated_server_names }}"
 
     #################################################################
-    # Apply Configuration
+    # Apply Alteon Configuration
     #################################################################
 
     - name: Apply Alteon Configuration
@@ -117,7 +119,7 @@
         command: apply
 
     #################################################################
-    # Save Configuration
+    # Save Alteon Configuration
     #################################################################
 
     - name: Save Alteon Configuration
