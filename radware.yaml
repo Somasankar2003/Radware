@@ -11,7 +11,7 @@
 
     os_auth_url: "http://192.168.170.50:5000"
     os_username: "admin"
-    os_password: "bLEZFvatBShkvUZyKrasUjmNdTTc9c3HcxWykrro"
+    os_password: "PASSWORD"
 
     os_project_name: "{{ project_name }}"
 
@@ -254,11 +254,11 @@
         state: present
 
         parameters:
-          index: 1
+          index: 6
           state: enabled
           ip4_address: "{{ gateway_ip }}"
           ip_ver: ipv4
-          vlan: "{{ 5 if (vlan_id | int) < 5 else vlan_id }}"
+          vlan: "{{ vlan_id }}"
           health_check_type: icmp
           health_check_interval_second: 30
           health_check_retries: 3
