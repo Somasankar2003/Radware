@@ -11,7 +11,7 @@
 
     os_auth_url: "http://192.168.170.50:5000"
     os_username: "admin"
-    os_password: "bLEZFvatBShkvUZyKrasUjmNdTTc9c3HcxWykrro"
+    os_password: "PASSWORD"
 
     os_project_name: "{{ project_name }}"
 
@@ -24,6 +24,12 @@
 
     alteon_username: "admin"
     alteon_password: "admin"
+
+    #################################################################
+    # VLAN Configuration
+    #################################################################
+
+    vlan_id: "{{ survey_vlan_id }}"
 
   tasks:
 
@@ -125,46 +131,6 @@
           }}
 
     #################################################################
-    # Automatically Fetch VLAN ID From OpenStack Network
-    #################################################################
-
-    - name: Fetch Network Information
-
-      openstack.cloud.networks_info:
-
-        auth:
-          auth_url: "{{ os_auth_url }}"
-          username: "{{ os_username }}"
-          password: "{{ os_password }}"
-          project_name: "{{ os_project_name }}"
-          project_domain_id: "{{ os_project_domain_id }}"
-          user_domain_name: "{{ os_user_domain_name }}"
-
-      register: network_info
-
-    #################################################################
-    # Extract VLAN ID Automatically
-    #################################################################
-
-    - name: Extract VLAN ID
-
-      set_fact:
-
-        vlan_id: >-
-          {{
-            (
-              network_info.networks
-              | selectattr(
-                  'id',
-                  'equalto',
-                  network_ids.split(',')[1]
-                )
-              | list
-              | first
-            ).provider_segmentation_id
-          }}
-
-    #################################################################
     # Display Interface Information
     #################################################################
 
@@ -175,7 +141,7 @@
           - "Management IP : {{ management_ip }}"
           - "Interface-2 IP : {{ interface2_ip }}"
           - "Interface-3 IP : {{ interface3_ip }}"
-          - "Detected VLAN ID : {{ vlan_id }}"
+          - "Configured VLAN ID : {{ vlan_id }}"
 
     #################################################################
     # Wait for Alteon API
@@ -292,7 +258,7 @@
           state: enabled
           ip4_address: "{{ gateway_ip }}"
           ip_ver: ipv4
-          vlan: "{{ vlan_id }}"
+          vlan: "{{ 5 if (vlan_id | int) < 5 else vlan_id }}"
           health_check_type: icmp
           health_check_interval_second: 30
           health_check_retries: 3
@@ -347,7 +313,7 @@
           - "Management IP : {{ management_ip }}"
           - "Interface-2 IP : {{ interface2_ip }}"
           - "Interface-3 IP : {{ interface3_ip }}"
-          - "Detected VLAN ID : {{ vlan_id }}"
+          - "Configured VLAN ID : {{ vlan_id }}"
           - "Gateway Configured : {{ gateway_ip }}"
           - "Configuration Applied Successfully"
           - "Configuration Saved Successfully"
