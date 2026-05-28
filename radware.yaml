@@ -11,7 +11,7 @@
 
     os_auth_url: "http://192.168.170.50:5000"
     os_username: "admin"
-    os_password: "bLEZFvatBShkvUZyKrasUjmNdTTc9c3HcxWykrro"
+    os_password: "PASSWORD"
 
     os_project_name: "{{ project_name }}"
 
@@ -266,40 +266,42 @@
           global_gateway_metric: roundrobin
 
     #################################################################
-    # Apply Alteon Configuration
+    # Apply Configuration
     #################################################################
 
-    - name: Apply Alteon Configuration
+    - name: Apply Configuration
 
-      uri:
-        url: "https://{{ management_ip }}/config?action=apply"
-        method: POST
+      radware.radware_modules.alteon_config_action:
 
-        user: "{{ alteon_username }}"
-        password: "{{ alteon_password }}"
+        provider:
+          server: "{{ management_ip }}"
+          user: "{{ alteon_username }}"
+          password: "{{ alteon_password }}"
+          validate_certs: false
+          https_port: 443
+          ssh_port: 22
+          timeout: 5
 
-        force_basic_auth: true
-        validate_certs: false
-
-        status_code: 200
+        action: apply
 
     #################################################################
-    # Save Alteon Configuration
+    # Save Configuration
     #################################################################
 
-    - name: Save Alteon Configuration
+    - name: Save Configuration
 
-      uri:
-        url: "https://{{ management_ip }}/config?action=save"
-        method: POST
+      radware.radware_modules.alteon_config_action:
 
-        user: "{{ alteon_username }}"
-        password: "{{ alteon_password }}"
+        provider:
+          server: "{{ management_ip }}"
+          user: "{{ alteon_username }}"
+          password: "{{ alteon_password }}"
+          validate_certs: false
+          https_port: 443
+          ssh_port: 22
+          timeout: 5
 
-        force_basic_auth: true
-        validate_certs: false
-
-        status_code: 200
+        action: save
 
     #################################################################
     # Final Deployment Status
