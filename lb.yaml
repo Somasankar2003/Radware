@@ -1,0 +1,146 @@
+---
+- name: Configure Alteon Dynamic Real Servers and Server Group
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+
+    #################################################################
+    # Convert Survey Input into List
+    #################################################################
+
+    real_server_ip_list: >-
+      {{
+        real_server_ips.split(',')
+        | map('trim')
+        | list
+      }}
+
+  tasks:
+
+    #################################################################
+    # Create Multiple Real Servers Dynamically
+    #################################################################
+
+    - name: Create Real Servers
+
+      radware.radware_modules.alteon_config_server:
+
+        provider:
+          server: "{{ management_ip }}"
+          user: "{{ alteon_username }}"
+          password: "{{ alteon_password }}"
+          validate_certs: false
+          https_port: 443
+          ssh_port: 22
+          timeout: 5
+
+        state: present
+
+        parameters:
+          index: "rs{{ ansible_loop.index }}"
+          state: enabled
+          ip_address: "{{ item }}"
+          weight: 7
+          availability: 5
+
+          server_ports:
+            - 80
+            - 8080
+            - 8081
+
+      loop: "{{ real_server_ip_list }}"
+      loop_control:
+        extended: true
+
+    #################################################################
+    # Build Server Name List
+    #################################################################
+
+    - name: Build Server Name List
+
+      set_fact:
+
+        generated_server_names: >-
+          {{
+            generated_server_names | default([])
+            +
+            [ 'rs' ~ ansible_loop.index|string ]
+          }}
+
+      loop: "{{ real_server_ip_list }}"
+      loop_control:
+        extended: true
+
+    #################################################################
+    # Create Server Group
+    #################################################################
+
+    - name: Create Server Group
+
+      radware.radware_modules.alteon_config_server_group:
+
+        provider:
+          server: "{{ management_ip }}"
+          user: "{{ alteon_username }}"
+          password: "{{ alteon_password }}"
+          validate_certs: false
+          https_port: 443
+          ssh_port: 22
+          timeout: 5
+
+        state: present
+
+        parameters:
+          index: "{{ server_group_name }}"
+          slb_metric: "{{ slb_metric }}"
+          slow_start_time_second: 60
+          persist_overload_max_conn_server: enabled
+
+          server_names: "{{ generated_server_names }}"
+
+    #################################################################
+    # Apply Configuration
+    #################################################################
+
+    - name: Apply Alteon Configuration
+
+      radware.radware_modules.alteon_mng_config:
+
+        provider:
+          server: "{{ management_ip }}"
+          user: "{{ alteon_username }}"
+          password: "{{ alteon_password }}"
+          validate_certs: false
+          https_port: 443
+
+        command: apply
+
+    #################################################################
+    # Save Configuration
+    #################################################################
+
+    - name: Save Alteon Configuration
+
+      radware.radware_modules.alteon_mng_config:
+
+        provider:
+          server: "{{ management_ip }}"
+          user: "{{ alteon_username }}"
+          password: "{{ alteon_password }}"
+          validate_certs: false
+          https_port: 443
+
+        command: save
+
+    #################################################################
+    # Final Output
+    #################################################################
+
+    - name: Display Final Result
+
+      debug:
+        msg:
+          - "Server Group Created : {{ server_group_name }}"
+          - "SLB Metric : {{ slb_metric }}"
+          - "Generated Real Servers : {{ generated_server_names }}"
