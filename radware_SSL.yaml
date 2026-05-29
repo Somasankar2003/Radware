@@ -39,31 +39,7 @@
       -----END RSA PRIVATE KEY-----
 
     #################################################################
-    # Hardcoded CSR
-    #################################################################
-
-    ssl_certificate_request: |
-      -----BEGIN CERTIFICATE REQUEST-----
-      MIIC0jCCAboCAQAwdDELMAkGA1UEBhMCSW4xEjAQBgNVBAgMCVRhbWlsTmFkdTET
-      MBEGA1UEBwwKQ29pbWJhdG9yZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0cyBQ
-      dHkgTHRkMRkwFwYDVQQDDBBhbHRlb24ubGFiLmxvY2FsMIIBIjANBgkqhkiG9w0B
-      AQEFAAOCAQ8AMIIBCgKCAQEAn+L/U3RguUqnRF2Wh44MBPardgb13vysqNm6hJwN
-      LTov8VqvWyMzOPvARkUUKFPXRmjJU2DSfDO6CWFXdcVvvHS0ddHT09mkhTl+Jnzl
-      247QS+qhA93UEIAMt65g7DVt+MiVP0yrYcGzRdMaVGul5arZ2DC5Fl2MBqzRwOBw
-      pib9PTrNs17PD1t/3aG3/pZ8PUcbVIpKgwWNuH2mK+RBKY5WtuyozNHOkL8RJ23G
-      OERRuGbPXWM7lZ5U5ClYfBJPwHyuNByrOCB17RC4KpnL5PMCeHwXPvJjPF0QUu9l
-      W9vGiOffQ7E7oK+P68CQu0uUGmfATxtB7RSegV7FNHnk1wIDAQABoBkwFwYJKoZI
-      hvcNAQkHMQoMCHN0YWNrbWF4MA0GCSqGSIb3DQEBCwUAA4IBAQB0K5D8CrKgcjMV
-      0fqjqd06DzuPBW4x6qrnbig938hekUnZt2q6Ho3t30J1JVEWsYHyIE4eUfs+hv2o
-      m9BxdeJA8dwpT1vuYC47iQxYx5212tW8FGkTgbvTBsEHjk2mmqhqoFSi5hcRXyq3
-      /7xgpvK7aNZCTG2yla+l8ak6xQJ1jp05ztfokRgVL3WCiubc7QaKv9pxYN5dusZD
-      PeQWu31pMLnj+XfFPTE+QueE3NUS3+cyAfe9CAE8QPuz6iWgFYZIv7HNNUxQTTDw
-      4joIgQ9W+0gCtS3bEwD2UyTVcmkPKSNmBzvmu5u0RHeVM5Stx4StK/jDCtAX7DpM
-      Qni3yii+
-      -----END CERTIFICATE REQUEST-----
-
-    #################################################################
-    # Hardcoded SSL Certificate
+    # Hardcoded SSL Server Certificate
     #################################################################
 
     ssl_server_certificate: |
@@ -138,65 +114,6 @@
     #################################################################
 
     - name: Save SSL Key
-
-      radware.radware_modules.alteon_mng_config:
-
-        provider:
-          server: "{{ slb_ip }}"
-          user: "{{ username }}"
-          password: "{{ password }}"
-          validate_certs: false
-          https_port: 443
-
-        command: save
-
-    #################################################################
-    # Import CSR
-    #################################################################
-
-    - name: Import CSR
-
-      radware.radware_modules.alteon_config_ssl_cert:
-
-        provider:
-          server: "{{ slb_ip }}"
-          user: "{{ username }}"
-          password: "{{ password }}"
-          validate_certs: false
-          https_port: 443
-          ssh_port: 22
-          timeout: 5
-
-        state: present
-
-        parameters:
-          index: "{{ certificate_id }}"
-          certificate_type: certificateRequest
-          description: "{{ common_name }}"
-          content: "{{ ssl_certificate_request }}"
-
-    #################################################################
-    # Apply CSR
-    #################################################################
-
-    - name: Apply CSR
-
-      radware.radware_modules.alteon_mng_config:
-
-        provider:
-          server: "{{ slb_ip }}"
-          user: "{{ username }}"
-          password: "{{ password }}"
-          validate_certs: false
-          https_port: 443
-
-        command: apply
-
-    #################################################################
-    # Save CSR
-    #################################################################
-
-    - name: Save CSR
 
       radware.radware_modules.alteon_mng_config:
 
@@ -332,3 +249,16 @@
 
         command: save
 
+    #################################################################
+    # Final Output
+    #################################################################
+
+    - name: Final Status
+
+      debug:
+        msg:
+          - "SSL Key Imported Successfully"
+          - "SSL Server Certificate Imported Successfully"
+          - "SSL Policy Created Successfully"
+          - "Certificate ID: {{ certificate_id }}"
+          - "SSL Policy ID: {{ ssl_policy_id }}"
