@@ -14,24 +14,20 @@
 
         new_server_ip_list: >-
           {{
-            (
-              real_server_ips.split(',')
-              | map('trim')
-              | reject('equalto', '')
-              | list
-            )
+            real_server_ips.split(',')
+            | map('trim')
+            | reject('equalto', '')
+            | list
             if real_server_ips is defined
             else []
           }}
 
         existing_server_name_list: >-
           {{
-            (
-              existing_server_names.split(',')
-              | map('trim')
-              | reject('equalto', '')
-              | list
-            )
+            existing_server_names.split(',')
+            | map('trim')
+            | reject('equalto', '')
+            | list
             if existing_server_names is defined
             else []
           }}
@@ -81,7 +77,7 @@
           }}
 
     #################################################################
-    # Create New Real Servers
+    # Create Real Servers
     #################################################################
 
     - name: Create Real Servers
@@ -111,15 +107,13 @@
             - 8080
             - 8081
 
-      loop: "{{ new_server_ip_list | default([]) }}"
+      loop: "{{ new_server_ip_list }}"
 
       loop_control:
         extended: true
 
       when:
-        - new_server_ip_list is defined
-        - new_server_ip_list | length > 0
-        - new_server_ip_list[0] != ''
+        - item | trim != ''
 
     #################################################################
     # Build Newly Created Server Names
