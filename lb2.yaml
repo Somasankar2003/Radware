@@ -6,30 +6,45 @@
   tasks:
 
     #################################################################
-    # Parse Survey Inputs
+    # Parse Existing Server Names
     #################################################################
 
-    - name: Parse survey inputs into clean lists
+    - name: Parse Existing Server Names
+      set_fact:
+
+        existing_server_name_list: >-
+          {{
+            []
+            if (
+              existing_server_names is not defined
+              or existing_server_names | trim == ''
+            )
+            else
+            (
+              existing_server_names.split(',')
+              | map('trim')
+              | reject('equalto', '')
+              | list
+            )
+          }}
+
+    #################################################################
+    # Parse New Server IPs
+    #################################################################
+
+    - name: Parse New Server IPs
       set_fact:
 
         new_server_ip_list: >-
           {{
-            (
-              real_server_ips
-              | default('')
-              | split(',')
-              | map('trim')
-              | reject('equalto', '')
-              | list
+            []
+            if (
+              real_server_ips is not defined
+              or real_server_ips | trim == ''
             )
-          }}
-
-        existing_server_name_list: >-
-          {{
+            else
             (
-              existing_server_names
-              | default('')
-              | split(',')
+              real_server_ips.split(',')
               | map('trim')
               | reject('equalto', '')
               | list
@@ -37,33 +52,52 @@
           }}
 
     #################################################################
-    # Debug Parsed Lists
+    # Debug Inputs
     #################################################################
 
-    - name: Debug parsed lists
+    - name: Debug Survey Inputs
       debug:
         msg:
-          - "new_server_ip_list        : {{ new_server_ip_list }}"
-          - "existing_server_name_list : {{ existing_server_name_list }}"
-          - "group_mode                : {{ group_mode }}"
+          - "server_mode              : {{ server_mode }}"
+          - "group_mode               : {{ group_mode }}"
+          - "existing_server_names    : {{ existing_server_name_list }}"
+          - "new_server_ip_list       : {{ new_server_ip_list }}"
 
     #################################################################
-    # Validate Input
+    # Validate Existing Mode
     #################################################################
 
-    - name: Validate inputs
+    - name: Validate Existing Server Mode
       assert:
         that:
-          - (new_server_ip_list | length > 0) or (existing_server_name_list | length > 0)
+          - existing_server_name_list | length > 0
         fail_msg: >
-          You must provide at least one value in:
-          real_server_ips OR existing_server_names
+          existing_server_names must be provided
+          when server_mode is Existing
+
+      when:
+        - server_mode | lower == 'existing'
+
+    #################################################################
+    # Validate New Mode
+    #################################################################
+
+    - name: Validate New Server Mode
+      assert:
+        that:
+          - new_server_ip_list | length > 0
+        fail_msg: >
+          real_server_ips must be provided
+          when server_mode is New
+
+      when:
+        - server_mode | lower == 'new'
 
     #################################################################
     # Calculate Starting Index
     #################################################################
 
-    - name: Calculate starting index for new servers
+    - name: Calculate Starting Index
       set_fact:
 
         rs_start_index: >-
@@ -81,10 +115,10 @@
           }}
 
     #################################################################
-    # Create Real Servers
+    # Create New Real Servers
     #################################################################
 
-    - name: Create Real Servers
+    - name: Create New Real Servers
 
       radware.radware_modules.alteon_config_server:
 
@@ -111,25 +145,19 @@
             - 8080
             - 8081
 
-      loop: >-
-        {{
-          new_server_ip_list
-          | reject('equalto', '')
-          | list
-        }}
+      loop: "{{ new_server_ip_list }}"
 
       loop_control:
         extended: true
 
       when:
-        - item is defined
-        - item | trim != ''
+        - server_mode | lower == 'new'
 
     #################################################################
     # Build Newly Created Server Names
     #################################################################
 
-    - name: Build New Server Name List
+    - name: Build New Server Names
       set_fact:
 
         new_server_names: >-
@@ -144,41 +172,41 @@
           }}
 
       when:
-        - new_server_ip_list | length > 0
+        - server_mode | lower == 'new'
 
     #################################################################
-    # Default Empty New Server List
+    # Existing Server Mode
     #################################################################
 
-    - name: Default New Server Name List to empty
+    - name: Use Existing Server Names
       set_fact:
-        new_server_names: []
+        new_server_names: "{{ existing_server_name_list }}"
 
       when:
-        - new_server_ip_list | length == 0
+        - server_mode | lower == 'existing'
 
     #################################################################
-    # Merge Existing + New Server Names
+    # Build Final Server List
     #################################################################
 
-    - name: Build Final Combined Server List
+    - name: Build Final Server List
       set_fact:
-        final_server_names: "{{ existing_server_name_list + new_server_names }}"
+        final_server_names: "{{ new_server_names }}"
 
     #################################################################
     # Debug Final Server List
     #################################################################
 
-    - name: Debug final server list
+    - name: Debug Final Server List
       debug:
         msg:
           - "final_server_names : {{ final_server_names }}"
 
     #################################################################
-    # Fetch Existing Group Information
+    # Fetch Existing Group Info
     #################################################################
 
-    - name: Fetch Existing Group Configuration
+    - name: Fetch Existing Group Info
 
       radware.radware_modules.alteon_config_server_group:
 
@@ -207,7 +235,7 @@
     # Merge Existing Group Members
     #################################################################
 
-    - name: Merge Existing Group Members into Final List
+    - name: Merge Existing Group Members
       set_fact:
 
         final_server_names: >-
@@ -226,7 +254,7 @@
         - existing_group_info is not failed
 
     #################################################################
-    # Create Empty Server Group First
+    # Create Empty Server Group
     #################################################################
 
     - name: Create Empty Server Group
@@ -267,10 +295,10 @@
         command: apply
 
     #################################################################
-    # Attach Servers to Group
+    # Attach Servers To Group
     #################################################################
 
-    - name: Attach Servers to Group
+    - name: Attach Servers To Group
 
       radware.radware_modules.alteon_config_server_group:
 
@@ -292,7 +320,7 @@
           server_names: "{{ final_server_names }}"
 
     #################################################################
-    # Apply Alteon Configuration
+    # Apply Configuration
     #################################################################
 
     - name: Apply Alteon Configuration
@@ -309,7 +337,7 @@
         command: apply
 
     #################################################################
-    # Save Alteon Configuration
+    # Save Configuration
     #################################################################
 
     - name: Save Alteon Configuration
@@ -326,16 +354,14 @@
         command: save
 
     #################################################################
-    # Final Output
+    # Final Result
     #################################################################
 
-    - name: Display Final Result
-
+    - name: Final Result
       debug:
         msg:
-          - "Group Mode             : {{ group_mode }}"
-          - "Server Group           : {{ server_group_name }}"
-          - "SLB Metric             : {{ slb_metric }}"
-          - "Existing Servers Added : {{ existing_server_name_list }}"
-          - "New Servers Created    : {{ new_server_names }}"
-          - "Final Group Members    : {{ final_server_names }}"
+          - "Server Mode          : {{ server_mode }}"
+          - "Group Mode           : {{ group_mode }}"
+          - "Server Group         : {{ server_group_name }}"
+          - "SLB Metric           : {{ slb_metric }}"
+          - "Final Servers        : {{ final_server_names }}"
