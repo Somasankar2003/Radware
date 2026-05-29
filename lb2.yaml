@@ -21,7 +21,7 @@
           }}
 
     #################################################################
-    # Initialize Server Lists
+    # Initialize Lists
     #################################################################
 
     - name: Initialize Server Lists
@@ -53,15 +53,15 @@
       loop: "{{ parsed_real_servers }}"
 
     #################################################################
-    # Debug Parsed Inputs
+    # Debug Inputs
     #################################################################
 
-    - name: Debug Parsed Inputs
+    - name: Debug Inputs
       debug:
         msg:
-          - "existing_server_names : {{ existing_server_names }}"
-          - "new_server_ip_list    : {{ new_server_ip_list }}"
-          - "group_mode            : {{ group_mode }}"
+          - "Existing Servers : {{ existing_server_names }}"
+          - "New Server IPs   : {{ new_server_ip_list }}"
+          - "Group Mode       : {{ group_mode }}"
 
     #################################################################
     # Validate Input
@@ -72,28 +72,8 @@
         that:
           - parsed_real_servers | length > 0
         fail_msg: >
-          You must provide at least one real server
-          or IP address in real_servers
-
-    #################################################################
-    # Calculate Starting Index
-    #################################################################
-
-    - name: Calculate Starting Index
-      set_fact:
-
-        rs_start_index: >-
-          {{
-            (
-              existing_server_names
-              | map('regex_replace', '^rs', '')
-              | map('int')
-              | list
-              | max
-              if existing_server_names | length > 0
-              else 0
-            ) + 1
-          }}
+          You must provide at least one value
+          in real_servers
 
     #################################################################
     # Create New Real Servers
@@ -115,7 +95,7 @@
         state: present
 
         parameters:
-          index: "rs{{ rs_start_index | int + ansible_loop.index0 }}"
+          index: "rs{{ ansible_loop.index }}"
           state: enabled
           ip_address: "{{ item }}"
           weight: 7
@@ -135,7 +115,7 @@
         - new_server_ip_list | length > 0
 
     #################################################################
-    # Build Newly Created Server Names
+    # Build New Server Names
     #################################################################
 
     - name: Build New Server Names
@@ -144,8 +124,8 @@
         new_server_names: >-
           {{
             range(
-              rs_start_index | int,
-              rs_start_index | int + new_server_ip_list | length
+              1,
+              (new_server_ip_list | length) + 1
             )
             | map('string')
             | map('regex_replace', '^(.*)$', 'rs\1')
@@ -156,10 +136,10 @@
         - new_server_ip_list | length > 0
 
     #################################################################
-    # Default Empty New Server List
+    # Default Empty New Server Names
     #################################################################
 
-    - name: Default New Server Name List
+    - name: Default Empty New Server Names
       set_fact:
         new_server_names: []
 
@@ -188,7 +168,7 @@
     - name: Debug Final Server Names
       debug:
         msg:
-          - "final_server_names : {{ final_server_names }}"
+          - "Final Servers : {{ final_server_names }}"
 
     #################################################################
     # Fetch Existing Group Information
@@ -348,9 +328,9 @@
     - name: Final Result
       debug:
         msg:
-          - "Group Mode           : {{ group_mode }}"
-          - "Server Group         : {{ server_group_name }}"
-          - "SLB Metric           : {{ slb_metric }}"
-          - "Existing Servers     : {{ existing_server_names }}"
-          - "New Server IPs       : {{ new_server_ip_list }}"
-          - "Final Servers        : {{ final_server_names }}"
+          - "Group Mode       : {{ group_mode }}"
+          - "Server Group     : {{ server_group_name }}"
+          - "SLB Metric       : {{ slb_metric }}"
+          - "Existing Servers : {{ existing_server_names }}"
+          - "New Server IPs   : {{ new_server_ip_list }}"
+          - "Final Servers    : {{ final_server_names }}"
