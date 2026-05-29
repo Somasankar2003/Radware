@@ -11,7 +11,7 @@
 
     - name: Generate SSL Key
 
-      radware.radware_modules.alteon_config_ssl_key:
+      radware.radware_modules.alteon_config_alteon_cli_command:
 
         provider:
           server: "{{ management_ip }}"
@@ -25,16 +25,15 @@
         state: present
 
         parameters:
-          index: "{{ certificate_id }}"
-          description: "{{ common_name }}"
-          key_type: rsa
-          key_size: 2048
+          alteon_cli_command: >-
+            /cfg/slb/ssl/sslid/{{ certificate_id }}/key/gen
+            2048
 
     #################################################################
     # Apply Configuration After SSL Key
     #################################################################
 
-    - name: Apply Alteon Configuration - SSL Key
+    - name: Apply SSL Key Configuration
 
       radware.radware_modules.alteon_mng_config:
 
@@ -51,7 +50,7 @@
     # Save Configuration After SSL Key
     #################################################################
 
-    - name: Save Alteon Configuration - SSL Key
+    - name: Save SSL Key Configuration
 
       radware.radware_modules.alteon_mng_config:
 
@@ -65,12 +64,12 @@
         command: save
 
     #################################################################
-    # Generate Certificate Request (CSR)
+    # Generate CSR
     #################################################################
 
-    - name: Generate SSL Certificate Request
+    - name: Generate CSR
 
-      radware.radware_modules.alteon_config_ssl_cert:
+      radware.radware_modules.alteon_config_alteon_cli_command:
 
         provider:
           server: "{{ management_ip }}"
@@ -84,15 +83,15 @@
         state: present
 
         parameters:
-          index: "{{ certificate_id }}"
-          certificate_type: certificateRequest
-          description: "{{ common_name }}"
+          alteon_cli_command: >-
+            /cfg/slb/ssl/sslid/{{ certificate_id }}/csr/gen
+            "{{ common_name }}"
 
     #################################################################
-    # Apply Configuration After CSR
+    # Apply CSR Configuration
     #################################################################
 
-    - name: Apply Alteon Configuration - CSR
+    - name: Apply CSR Configuration
 
       radware.radware_modules.alteon_mng_config:
 
@@ -106,10 +105,10 @@
         command: apply
 
     #################################################################
-    # Save Configuration After CSR
+    # Save CSR Configuration
     #################################################################
 
-    - name: Save Alteon Configuration - CSR
+    - name: Save CSR Configuration
 
       radware.radware_modules.alteon_mng_config:
 
@@ -123,12 +122,12 @@
         command: save
 
     #################################################################
-    # Generate Server Certificate
+    # Generate Self Signed Server Certificate
     #################################################################
 
     - name: Generate Server Certificate
 
-      radware.radware_modules.alteon_config_ssl_cert:
+      radware.radware_modules.alteon_config_alteon_cli_command:
 
         provider:
           server: "{{ management_ip }}"
@@ -142,15 +141,15 @@
         state: present
 
         parameters:
-          index: "{{ certificate_id }}"
-          certificate_type: serverCertificate
-          description: "{{ common_name }}"
+          alteon_cli_command: >-
+            /cfg/slb/ssl/sslid/{{ certificate_id }}/cert/gen
+            "{{ common_name }}"
 
     #################################################################
-    # Apply Configuration After Server Certificate
+    # Apply Server Certificate
     #################################################################
 
-    - name: Apply Alteon Configuration - Server Certificate
+    - name: Apply Server Certificate Configuration
 
       radware.radware_modules.alteon_mng_config:
 
@@ -164,10 +163,10 @@
         command: apply
 
     #################################################################
-    # Save Configuration After Server Certificate
+    # Save Server Certificate
     #################################################################
 
-    - name: Save Alteon Configuration - Server Certificate
+    - name: Save Server Certificate Configuration
 
       radware.radware_modules.alteon_mng_config:
 
@@ -201,24 +200,18 @@
 
         parameters:
           index: "{{ ssl_policy_id }}"
-
           be_ssl_encryption: enabled
-
           secure_renegotiation: 5
-
           fe_cipher_suite: main
-
           be_hw_offload_rsa: disabled
-
           pass_ssl_info_add_front_end_https_header: enabled
-
           fe_intermediate_ca_chain_type: none
 
     #################################################################
     # Apply SSL Policy
     #################################################################
 
-    - name: Apply Alteon Configuration - SSL Policy
+    - name: Apply SSL Policy
 
       radware.radware_modules.alteon_mng_config:
 
@@ -235,7 +228,7 @@
     # Save SSL Policy
     #################################################################
 
-    - name: Save Alteon Configuration - SSL Policy
+    - name: Save SSL Policy
 
       radware.radware_modules.alteon_mng_config:
 
@@ -246,19 +239,3 @@
           validate_certs: false
           https_port: 443
 
-        command: save
-
-    #################################################################
-    # Final Output
-    #################################################################
-
-    - name: Display Final Result
-
-      debug:
-        msg:
-          - "SSL Key Generated Successfully"
-          - "CSR Generated Successfully"
-          - "Server Certificate Generated Successfully"
-          - "SSL Policy Created Successfully"
-          - "Certificate ID : {{ certificate_id }}"
-          - "Common Name : {{ common_name }}"
