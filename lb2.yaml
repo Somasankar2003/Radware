@@ -3,34 +3,33 @@
   hosts: localhost
   gather_facts: false
   vars:
-    #################################################################
-    # Convert Survey Inputs into Lists
-    # real_server_ips       : comma-separated IPs  (leave blank if none)
-    # existing_server_names : comma-separated rs-names (leave blank if none)
-    # server_group_name     : target group (new or existing)
-    # group_mode            : "New" | "Existing"  (multiplechoice)
-    #################################################################
-    new_server_ip_list: >-
-      {{
-        (real_server_ips | default('')) | trim != ''
-        | ternary(
-            (real_server_ips | default('')).split(',')
-            | map('trim') | select() | list,
-            []
-          )
-      }}
-
-    existing_server_name_list: >-
-      {{
-        (existing_server_names | default('')) | trim != ''
-        | ternary(
-            (existing_server_names | default('')).split(',')
-            | map('trim') | select() | list,
-            []
-          )
-      }}
+    _raw_new_ips: "{{ real_server_ips | default('') | trim }}"
+    _raw_existing: "{{ existing_server_names | default('') | trim }}"
 
   tasks:
+    #################################################################
+    # Parse Survey Inputs into Clean Lists
+    #################################################################
+    - name: Parse survey inputs into clean lists
+      set_fact:
+        new_server_ip_list: >-
+          {{
+            [] if (_raw_new_ips == '' or _raw_new_ips == None)
+            else _raw_new_ips.split(',') | map('trim') | select() | list
+          }}
+        existing_server_name_list: >-
+          {{
+            [] if (_raw_existing == '' or _raw_existing == None)
+            else _raw_existing.split(',') | map('trim') | select() | list
+          }}
+
+    - name: Debug parsed lists
+      debug:
+        msg:
+          - "new_server_ip_list        : {{ new_server_ip_list }}"
+          - "existing_server_name_list : {{ existing_server_name_list }}"
+          - "group_mode                : {{ group_mode }}"
+
     #################################################################
     # Validate - at least one input must be provided
     #################################################################
@@ -43,8 +42,7 @@
           'real_server_ips' or 'existing_server_names'.
 
     #################################################################
-    # Determine the starting index for new real-server naming
-    # so rs-names never clash with existing ones
+    # Determine starting index for new real-server naming
     #################################################################
     - name: Calculate starting index for new servers
       set_fact:
@@ -62,8 +60,12 @@
             ) + 1
           }}
 
+    - name: Debug starting index
+      debug:
+        msg: "rs_start_index : {{ rs_start_index }}"
+
     #################################################################
-    # Create NEW Real Servers (skipped if real_server_ips is empty)
+    # Create NEW Real Servers
     #################################################################
     - name: Create New Real Servers
       radware.radware_modules.alteon_config_server:
@@ -89,9 +91,7 @@
       loop: "{{ new_server_ip_list }}"
       loop_control:
         extended: true
-      when:
-        - new_server_ip_list | length > 0
-        - item | trim != ''
+      when: new_server_ip_list | length > 0
 
     #################################################################
     # Build name list for newly created servers
@@ -122,9 +122,12 @@
       set_fact:
         final_server_names: "{{ existing_server_name_list + new_server_names }}"
 
+    - name: Debug final server list before group task
+      debug:
+        msg: "final_server_names : {{ final_server_names }}"
+
     #################################################################
     # Fetch current group members when attaching to EXISTING group
-    # so we append instead of overwrite
     #################################################################
     - name: Fetch Existing Group Configuration
       radware.radware_modules.alteon_config_server_group:
