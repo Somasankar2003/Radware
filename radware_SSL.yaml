@@ -11,7 +11,7 @@
 
     - name: Generate SSL Key
 
-      radware.radware_alteon.alteon_config_ssl_key:
+      radware.radware_modules.alteon_config_ssl_key:
 
         provider:
           server: "{{ management_ip }}"
@@ -70,7 +70,7 @@
 
     - name: Generate SSL Certificate Request
 
-      radware.radware_alteon.alteon_config_ssl_cert:
+      radware.radware_modules.alteon_config_ssl_cert:
 
         provider:
           server: "{{ management_ip }}"
@@ -128,7 +128,7 @@
 
     - name: Generate Server Certificate
 
-      radware.radware_alteon.alteon_config_ssl_cert:
+      radware.radware_modules.alteon_config_ssl_cert:
 
         provider:
           server: "{{ management_ip }}"
@@ -186,7 +186,7 @@
 
     - name: Create SSL Policy
 
-      radware.radware_alteon.alteon_config_ssl_policy:
+      radware.radware_modules.alteon_config_ssl_policy:
 
         provider:
           server: "{{ management_ip }}"
@@ -262,4 +262,3 @@
           - "SSL Policy Created Successfully"
           - "Certificate ID : {{ certificate_id }}"
           - "Common Name : {{ common_name }}"
-          - "SSL Policy ID : {{ ssl_policy_id }}"
