@@ -14,22 +14,26 @@
 
         new_server_ip_list: >-
           {{
-            real_server_ips.split(',')
-            | map('trim')
-            | reject('equalto', '')
-            | list
-            if real_server_ips is defined
-            else []
+            (
+              real_server_ips
+              | default('')
+              | split(',')
+              | map('trim')
+              | reject('equalto', '')
+              | list
+            )
           }}
 
         existing_server_name_list: >-
           {{
-            existing_server_names.split(',')
-            | map('trim')
-            | reject('equalto', '')
-            | list
-            if existing_server_names is defined
-            else []
+            (
+              existing_server_names
+              | default('')
+              | split(',')
+              | map('trim')
+              | reject('equalto', '')
+              | list
+            )
           }}
 
     #################################################################
@@ -107,12 +111,18 @@
             - 8080
             - 8081
 
-      loop: "{{ new_server_ip_list }}"
+      loop: >-
+        {{
+          new_server_ip_list
+          | reject('equalto', '')
+          | list
+        }}
 
       loop_control:
         extended: true
 
       when:
+        - item is defined
         - item | trim != ''
 
     #################################################################
