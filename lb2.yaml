@@ -3,10 +3,6 @@
   hosts: localhost
   gather_facts: false
 
-  vars:
-    _raw_new_ips: "{{ real_server_ips | default('') | trim }}"
-    _raw_existing: "{{ existing_server_names | default('') | trim }}"
-
   tasks:
 
     #################################################################
@@ -18,14 +14,26 @@
 
         new_server_ip_list: >-
           {{
-            [] if (_raw_new_ips == '' or _raw_new_ips == None)
-            else _raw_new_ips.split(',') | map('trim') | select() | list
+            (
+              real_server_ips.split(',')
+              | map('trim')
+              | reject('equalto', '')
+              | list
+            )
+            if real_server_ips is defined
+            else []
           }}
 
         existing_server_name_list: >-
           {{
-            [] if (_raw_existing == '' or _raw_existing == None)
-            else _raw_existing.split(',') | map('trim') | select() | list
+            (
+              existing_server_names.split(',')
+              | map('trim')
+              | reject('equalto', '')
+              | list
+            )
+            if existing_server_names is defined
+            else []
           }}
 
     #################################################################
@@ -76,7 +84,7 @@
     # Create New Real Servers
     #################################################################
 
-    - name: Create New Real Servers
+    - name: Create Real Servers
 
       radware.radware_modules.alteon_config_server:
 
@@ -103,13 +111,15 @@
             - 8080
             - 8081
 
-      loop: "{{ new_server_ip_list }}"
+      loop: "{{ new_server_ip_list | default([]) }}"
 
       loop_control:
         extended: true
 
       when:
+        - new_server_ip_list is defined
         - new_server_ip_list | length > 0
+        - new_server_ip_list[0] != ''
 
     #################################################################
     # Build Newly Created Server Names
