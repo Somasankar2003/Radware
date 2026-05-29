@@ -6,95 +6,64 @@
   tasks:
 
     #################################################################
-    # Parse Existing Server Names
+    # Parse Real Servers Input
     #################################################################
 
-    - name: Parse Existing Server Names
+    - name: Parse Real Servers Input
       set_fact:
 
-        existing_server_name_list: >-
+        parsed_real_servers: >-
           {{
-            []
-            if (
-              existing_server_names is not defined
-              or existing_server_names | trim == ''
-            )
-            else
-            (
-              existing_server_names.split(',')
-              | map('trim')
-              | reject('equalto', '')
-              | list
-            )
+            real_servers.split(',')
+            | map('trim')
+            | reject('equalto', '')
+            | list
           }}
 
     #################################################################
-    # Parse New Server IPs
+    # Separate Existing Servers and New IPs
     #################################################################
 
-    - name: Parse New Server IPs
+    - name: Separate Existing Servers and New IPs
       set_fact:
+
+        existing_server_names: >-
+          {{
+            parsed_real_servers
+            | select('match', '^rs[0-9]+$')
+            | list
+          }}
 
         new_server_ip_list: >-
           {{
-            []
-            if (
-              real_server_ips is not defined
-              or real_server_ips | trim == ''
-            )
-            else
-            (
-              real_server_ips.split(',')
-              | map('trim')
-              | reject('equalto', '')
-              | list
-            )
+            parsed_real_servers
+            | reject('match', '^rs[0-9]+$')
+            | list
           }}
 
     #################################################################
-    # Debug Inputs
+    # Debug Parsed Inputs
     #################################################################
 
-    - name: Debug Survey Inputs
+    - name: Debug Parsed Inputs
       debug:
         msg:
-          - "server_mode              : {{ server_mode }}"
-          - "group_mode               : {{ group_mode }}"
-          - "existing_server_names    : {{ existing_server_name_list }}"
-          - "new_server_ip_list       : {{ new_server_ip_list }}"
+          - "existing_server_names : {{ existing_server_names }}"
+          - "new_server_ip_list    : {{ new_server_ip_list }}"
+          - "group_mode            : {{ group_mode }}"
 
     #################################################################
-    # Validate Existing Mode
+    # Validate Input
     #################################################################
 
-    - name: Validate Existing Server Mode
+    - name: Validate Input
       assert:
         that:
-          - existing_server_name_list | length > 0
+          - parsed_real_servers | length > 0
         fail_msg: >
-          existing_server_names must be provided
-          when server_mode is Existing
+          You must provide at least one real server
+          or IP address in real_servers
 
-      when:
-        - server_mode | lower == 'existing'
-
-    #################################################################
-    # Validate New Mode
-    #################################################################
-
-    - name: Validate New Server Mode
-      assert:
-        that:
-          - new_server_ip_list | length > 0
-        fail_msg: >
-          real_server_ips must be provided
-          when server_mode is New
-
-      when:
-         - server_mode is defined 
-         - server_mode | lower == 'new' 
-         - new_server_ip_list | length > 0
-        
     #################################################################
     # Calculate Starting Index
     #################################################################
@@ -105,13 +74,12 @@
         rs_start_index: >-
           {{
             (
-              existing_server_name_list
+              existing_server_names
               | map('regex_replace', '^rs', '')
-              | select('match', '^\d+$')
               | map('int')
               | list
               | max
-              if existing_server_name_list | length > 0
+              if existing_server_names | length > 0
               else 0
             ) + 1
           }}
@@ -153,7 +121,7 @@
         extended: true
 
       when:
-        - server_mode | lower == 'new'
+        - new_server_ip_list | length > 0
 
     #################################################################
     # Build Newly Created Server Names
@@ -174,41 +142,48 @@
           }}
 
       when:
-        - server_mode | lower == 'new'
+        - new_server_ip_list | length > 0
 
     #################################################################
-    # Existing Server Mode
+    # Default Empty New Server List
     #################################################################
 
-    - name: Use Existing Server Names
+    - name: Default New Server Name List
       set_fact:
-        new_server_names: "{{ existing_server_name_list }}"
+        new_server_names: []
 
       when:
-        - server_mode | lower == 'existing'
+        - new_server_ip_list | length == 0
 
     #################################################################
-    # Build Final Server List
+    # Merge Existing + New Servers
     #################################################################
 
-    - name: Build Final Server List
+    - name: Merge Existing and New Servers
       set_fact:
-        final_server_names: "{{ new_server_names }}"
+
+        final_server_names: >-
+          {{
+            (
+              existing_server_names
+              + new_server_names
+            ) | unique | list
+          }}
 
     #################################################################
-    # Debug Final Server List
+    # Debug Final Server Names
     #################################################################
 
-    - name: Debug Final Server List
+    - name: Debug Final Server Names
       debug:
         msg:
           - "final_server_names : {{ final_server_names }}"
 
     #################################################################
-    # Fetch Existing Group Info
+    # Fetch Existing Group Information
     #################################################################
 
-    - name: Fetch Existing Group Info
+    - name: Fetch Existing Group Information
 
       radware.radware_modules.alteon_config_server_group:
 
@@ -362,8 +337,9 @@
     - name: Final Result
       debug:
         msg:
-          - "Server Mode          : {{ server_mode }}"
           - "Group Mode           : {{ group_mode }}"
           - "Server Group         : {{ server_group_name }}"
           - "SLB Metric           : {{ slb_metric }}"
+          - "Existing Servers     : {{ existing_server_names }}"
+          - "New Server IPs       : {{ new_server_ip_list }}"
           - "Final Servers        : {{ final_server_names }}"
