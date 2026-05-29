@@ -3,20 +3,105 @@
   hosts: localhost
   gather_facts: false
 
+  vars:
+
+    #################################################################
+    # Hardcoded SSL Private Key
+    #################################################################
+
+    ssl_private_key: |
+      -----BEGIN RSA PRIVATE KEY-----
+      MIIEowIBAAKCAQEAn+L/U3RguUqnRF2Wh44MBPardgb13vysqNm6hJwNLTov8Vqv
+      WyMzOPvARkUUKFPXRmjJU2DSfDO6CWFXdcVvvHS0ddHT09mkhTl+Jnzl247QS+qh
+      A93UEIAMt65g7DVt+MiVP0yrYcGzRdMaVGul5arZ2DC5Fl2MBqzRwOBwpib9PTrN
+      s17PD1t/3aG3/pZ8PUcbVIpKgwWNuH2mK+RBKY5WtuyozNHOkL8RJ23GOERRuGbP
+      XWM7lZ5U5ClYfBJPwHyuNByrOCB17RC4KpnL5PMCeHwXPvJjPF0QUu9lW9vGiOff
+      Q7E7oK+P68CQu0uUGmfATxtB7RSegV7FNHnk1wIDAQABAoIBAD8GkjNpir8/yFPQ
+      uIfS3LYQLmKmN8GgxMcCnN2tThxn9YIkhz9bztNFmfOZQ2rqMdAVelcdsZs4ILuV
+      3Y4VOAiH0KMpBWFbR9kkYq/1R/6We1GRucr2ZKPkdh7p5Fb4cNNC7mI3bM9qNaru
+      nlBs5sZz5M+t1SgV1B7FfSGU15MG6AFcxla5v0GV05iCnIS2PGOAKsuJAYpCK9Wt
+      PaQY+ECDzHQWO+NprVFRwF/MdCPoViDQSSxQ9WYwN3e2sg+yW6/lnPsEloCudI1+
+      Dfl0dq17JUzaAKC++1Y7KcnkvKeXCui8aDdDiHvwXlYNV48y5pKfP+WhEsfTrQpQ
+      /oZ61ZECgYEAzfEgZzrVK3g5pvS3dwAReSjK9+DP3/wx/cybq8ld0ZjEc6pr7TxX
+      lKA8cFMrY/U77UJy7O7NCUpq1WRNf0W5fhSrmMv7LtcHPx+GiGV0Rcsj2S7sv4US
+      KzVg8sMYbqa5vVqrcdgIMPgFQaqh1UzBLK1eyh9d0tbErqJMMAq2uSsCgYEAxsAO
+      MeBoSLpCosLrl2Qpty0sdrvZ1pEEIyMllj8unXOJFup3k5zyo2zh+s+nM/EOrLV3
+      zIGhnWxNbKwXw1klCdrktyRf3Eo30mvEdZOxuJR4RInMug9Mhyv2OqU9JOv+mEZc
+      wyj+AeyJTfkFtG4t6WcSQGY7cCYBFsuwfanHVQUCgYBL+48tBzPnWfBLfTbDnS7V
+      OQvJ8RRBW9dGANvewejvkCHLWzF+0iiuGYCzILx9oNl/bGjiqijUKLTKDrvZHWyW
+      7CFzuq7uVT/DNmp4oJYJui170ChhcUOG1abzaq/1A2a8Slu/ISnEh33JAJ+9Bxiu
+      1ziF8pS3Wa4vkInzn8BTCQKBgQClOjbSyh+IDqilDOy0oAV6DekAEG0pzsckuuxd
+      esszBEC8t1GPexPQPw2i6Ay1xroPZJFih4YnDElVhb//m9WJ2tr3UhsLVPwRR5w8
+      rvs5WtydBf4X0+4oFakO2h352uN+DkjBygtY6B7BnrtaY5pxhkmLFjJlqoKPQ+jG
+      n2ViTQKBgHYmXGxfrWXpELlfyN+QeL/YXPzQREX0SKJwyVrbaFwmUhGFemrIqo+9
+      5Gng1YcPuuF5FVyTGpZCM5sXKInqGuvW0skI1aFrZFGQhAyhZGOUgvicQTIQeE0O
+      IEr75U1FOZAp9sghgiSSPT4iiwl3OU7x4EK2DZxwX/znzoJpBWUi
+      -----END RSA PRIVATE KEY-----
+
+    #################################################################
+    # Hardcoded CSR
+    #################################################################
+
+    ssl_certificate_request: |
+      -----BEGIN CERTIFICATE REQUEST-----
+      MIIC0jCCAboCAQAwdDELMAkGA1UEBhMCSW4xEjAQBgNVBAgMCVRhbWlsTmFkdTET
+      MBEGA1UEBwwKQ29pbWJhdG9yZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0cyBQ
+      dHkgTHRkMRkwFwYDVQQDDBBhbHRlb24ubGFiLmxvY2FsMIIBIjANBgkqhkiG9w0B
+      AQEFAAOCAQ8AMIIBCgKCAQEAn+L/U3RguUqnRF2Wh44MBPardgb13vysqNm6hJwN
+      LTov8VqvWyMzOPvARkUUKFPXRmjJU2DSfDO6CWFXdcVvvHS0ddHT09mkhTl+Jnzl
+      247QS+qhA93UEIAMt65g7DVt+MiVP0yrYcGzRdMaVGul5arZ2DC5Fl2MBqzRwOBw
+      pib9PTrNs17PD1t/3aG3/pZ8PUcbVIpKgwWNuH2mK+RBKY5WtuyozNHOkL8RJ23G
+      OERRuGbPXWM7lZ5U5ClYfBJPwHyuNByrOCB17RC4KpnL5PMCeHwXPvJjPF0QUu9l
+      W9vGiOffQ7E7oK+P68CQu0uUGmfATxtB7RSegV7FNHnk1wIDAQABoBkwFwYJKoZI
+      hvcNAQkHMQoMCHN0YWNrbWF4MA0GCSqGSIb3DQEBCwUAA4IBAQB0K5D8CrKgcjMV
+      0fqjqd06DzuPBW4x6qrnbig938hekUnZt2q6Ho3t30J1JVEWsYHyIE4eUfs+hv2o
+      m9BxdeJA8dwpT1vuYC47iQxYx5212tW8FGkTgbvTBsEHjk2mmqhqoFSi5hcRXyq3
+      /7xgpvK7aNZCTG2yla+l8ak6xQJ1jp05ztfokRgVL3WCiubc7QaKv9pxYN5dusZD
+      PeQWu31pMLnj+XfFPTE+QueE3NUS3+cyAfe9CAE8QPuz6iWgFYZIv7HNNUxQTTDw
+      4joIgQ9W+0gCtS3bEwD2UyTVcmkPKSNmBzvmu5u0RHeVM5Stx4StK/jDCtAX7DpM
+      Qni3yii+
+      -----END CERTIFICATE REQUEST-----
+
+    #################################################################
+    # Hardcoded SSL Certificate
+    #################################################################
+
+    ssl_server_certificate: |
+      -----BEGIN CERTIFICATE-----
+      MIIDbzCCAlcCFDPcgyPn9IATtl2C7h4fsI+7O2byMA0GCSqGSIb3DQEBCwUAMHQx
+      CzAJBgNVBAYTAkluMRIwEAYDVQQIDAlUYW1pbE5hZHUxEzARBgNVBAcMCkNvaW1i
+      YXRvcmUxITAfBgNVBAoMGEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDEZMBcGA1UE
+      AwwQYWx0ZW9uLmxhYi5sb2NhbDAeFw0yNjA1MjkwNzA5MjBaFw0yNzA1MjkwNzA5
+      MjBaMHQxCzAJBgNVBAYTAkluMRIwEAYDVQQIDAlUYW1pbE5hZHUxEzARBgNVBAcM
+      CkNvaW1iYXRvcmUxITAfBgNVBAoMGEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDEZ
+      MBcGA1UEAwwQYWx0ZW9uLmxhYi5sb2NhbDCCASIwDQYJKoZIhvcNAQEBBQADggEP
+      ADCCAQoCggEBAJ/i/1N0YLlKp0RdloeODAT2q3YG9d78rKjZuoScDS06L/Far1sj
+      Mzj7wEZFFChT10ZoyVNg0nwzuglhV3XFb7x0tHXR09PZpIU5fiZ85duO0EvqoQPd
+      1BCADLeuYOw1bfjIlT9Mq2HBs0XTGlRrpeWq2dgwuRZdjAas0cDgcKYm/T06zbNe
+      zw9bf92ht/6WfD1HG1SKSoMFjbh9pivkQSmOVrbsqMzRzpC/ESdtxjhEUbhmz11j
+      O5WeVOQpWHwST8B8rjQcqzggde0QuCqZy+TzAnh8Fz7yYzxdEFLvZVvbxojn30Ox
+      O6Cvj+vAkLtLlBpnwE8bQe0UnoFexTR55NcCAwEAATANBgkqhkiG9w0BAQsFAAOC
+      AQEAgevCuMRSuLuOwcumSQbtMaygHTeAdUVeivR18celwcyM45Xb0rVb/v2HiQW9
+      YJ822uHdrX8/Rw5RBFd1gJesWa4gWljVMU74qgoM9a/mrnYH2YQ/Ol5ppHUoad9m
+      T8Iz781/R+gpq1LeTiZlvFG/dWUPQO0D2vE5ZLsZNpTwyT2kL3lJTEEc6NI/OxAo
+      /JTI5xLft4QMm8fEVmg+YNCZPlzZ0dqLWT+iYjGZNemOcRp+ab21AjoAqcDeZxoS
+      7OUrWmNolT7eYkaL1SkJcfdQlCvQt/8VQ9YvJokLEJ2y2NZjlhq+yyY+apGu/hil
+      zgFHe2S6EXAfrvZct1+Y0ajzMA==
+      -----END CERTIFICATE-----
+
   tasks:
 
     #################################################################
-    # Generate SSL Key
+    # Import SSL Key
     #################################################################
 
-    - name: Generate SSL Key
-
-      radware.radware_modules.alteon_config_alteon_cli_command:
+    - name: Import SSL Key
+      radware.radware_modules.alteon_config_ssl_key:
 
         provider:
-          server: "{{ management_ip }}"
-          user: "{{ alteon_username }}"
-          password: "{{ alteon_password }}"
+          server: "{{ SLB_IP }}"
+          user: "{{ Username }}"
+          password: "{{ Password }}"
           validate_certs: false
           https_port: 443
           ssh_port: 22
@@ -25,56 +110,53 @@
         state: present
 
         parameters:
-          alteon_cli_command: >-
-            /cfg/slb/ssl/sslid/{{ certificate_id }}/key/gen
-            2048
+          index: "{{ Certificate_ID }}"
+          description: "{{ Common_Name }}"
+          content: "{{ ssl_private_key }}"
 
     #################################################################
-    # Apply Configuration After SSL Key
+    # Apply SSL Key
     #################################################################
 
-    - name: Apply SSL Key Configuration
-
+    - name: Apply SSL Key
       radware.radware_modules.alteon_mng_config:
 
         provider:
-          server: "{{ management_ip }}"
-          user: "{{ alteon_username }}"
-          password: "{{ alteon_password }}"
+          server: "{{ SLB_IP }}"
+          user: "{{ Username }}"
+          password: "{{ Password }}"
           validate_certs: false
           https_port: 443
 
         command: apply
 
     #################################################################
-    # Save Configuration After SSL Key
+    # Save SSL Key
     #################################################################
 
-    - name: Save SSL Key Configuration
-
+    - name: Save SSL Key
       radware.radware_modules.alteon_mng_config:
 
         provider:
-          server: "{{ management_ip }}"
-          user: "{{ alteon_username }}"
-          password: "{{ alteon_password }}"
+          server: "{{ SLB_IP }}"
+          user: "{{ Username }}"
+          password: "{{ Password }}"
           validate_certs: false
           https_port: 443
 
         command: save
 
     #################################################################
-    # Generate CSR
+    # Import CSR
     #################################################################
 
-    - name: Generate CSR
-
-      radware.radware_modules.alteon_config_alteon_cli_command:
+    - name: Import CSR
+      radware.radware_modules.alteon_config_ssl_cert:
 
         provider:
-          server: "{{ management_ip }}"
-          user: "{{ alteon_username }}"
-          password: "{{ alteon_password }}"
+          server: "{{ SLB_IP }}"
+          user: "{{ Username }}"
+          password: "{{ Password }}"
           validate_certs: false
           https_port: 443
           ssh_port: 22
@@ -83,56 +165,54 @@
         state: present
 
         parameters:
-          alteon_cli_command: >-
-            /cfg/slb/ssl/sslid/{{ certificate_id }}/csr/gen
-            "{{ common_name }}"
+          index: "{{ Certificate_ID }}"
+          certificate_type: certificateRequest
+          description: "{{ Common_Name }}"
+          content: "{{ ssl_certificate_request }}"
 
     #################################################################
-    # Apply CSR Configuration
+    # Apply CSR
     #################################################################
 
-    - name: Apply CSR Configuration
-
+    - name: Apply CSR
       radware.radware_modules.alteon_mng_config:
 
         provider:
-          server: "{{ management_ip }}"
-          user: "{{ alteon_username }}"
-          password: "{{ alteon_password }}"
+          server: "{{ SLB_IP }}"
+          user: "{{ Username }}"
+          password: "{{ Password }}"
           validate_certs: false
           https_port: 443
 
         command: apply
 
     #################################################################
-    # Save CSR Configuration
+    # Save CSR
     #################################################################
 
-    - name: Save CSR Configuration
-
+    - name: Save CSR
       radware.radware_modules.alteon_mng_config:
 
         provider:
-          server: "{{ management_ip }}"
-          user: "{{ alteon_username }}"
-          password: "{{ alteon_password }}"
+          server: "{{ SLB_IP }}"
+          user: "{{ Username }}"
+          password: "{{ Password }}"
           validate_certs: false
           https_port: 443
 
         command: save
 
     #################################################################
-    # Generate Self Signed Server Certificate
+    # Import Server Certificate
     #################################################################
 
-    - name: Generate Server Certificate
-
-      radware.radware_modules.alteon_config_alteon_cli_command:
+    - name: Import Server Certificate
+      radware.radware_modules.alteon_config_ssl_cert:
 
         provider:
-          server: "{{ management_ip }}"
-          user: "{{ alteon_username }}"
-          password: "{{ alteon_password }}"
+          server: "{{ SLB_IP }}"
+          user: "{{ Username }}"
+          password: "{{ Password }}"
           validate_certs: false
           https_port: 443
           ssh_port: 22
@@ -141,22 +221,22 @@
         state: present
 
         parameters:
-          alteon_cli_command: >-
-            /cfg/slb/ssl/sslid/{{ certificate_id }}/cert/gen
-            "{{ common_name }}"
+          index: "{{ Certificate_ID }}"
+          certificate_type: serverCertificate
+          description: "{{ Common_Name }}"
+          content: "{{ ssl_server_certificate }}"
 
     #################################################################
     # Apply Server Certificate
     #################################################################
 
-    - name: Apply Server Certificate Configuration
-
+    - name: Apply Server Certificate
       radware.radware_modules.alteon_mng_config:
 
         provider:
-          server: "{{ management_ip }}"
-          user: "{{ alteon_username }}"
-          password: "{{ alteon_password }}"
+          server: "{{ SLB_IP }}"
+          user: "{{ Username }}"
+          password: "{{ Password }}"
           validate_certs: false
           https_port: 443
 
@@ -166,14 +246,13 @@
     # Save Server Certificate
     #################################################################
 
-    - name: Save Server Certificate Configuration
-
+    - name: Save Server Certificate
       radware.radware_modules.alteon_mng_config:
 
         provider:
-          server: "{{ management_ip }}"
-          user: "{{ alteon_username }}"
-          password: "{{ alteon_password }}"
+          server: "{{ SLB_IP }}"
+          user: "{{ Username }}"
+          password: "{{ Password }}"
           validate_certs: false
           https_port: 443
 
@@ -184,13 +263,12 @@
     #################################################################
 
     - name: Create SSL Policy
-
       radware.radware_modules.alteon_config_ssl_policy:
 
         provider:
-          server: "{{ management_ip }}"
-          user: "{{ alteon_username }}"
-          password: "{{ alteon_password }}"
+          server: "{{ SLB_IP }}"
+          user: "{{ Username }}"
+          password: "{{ Password }}"
           validate_certs: false
           https_port: 443
           ssh_port: 22
@@ -199,7 +277,9 @@
         state: present
 
         parameters:
-          index: "{{ ssl_policy_id }}"
+          index: "{{ SSL_Policy_ID }}"
+          description: "{{ Common_Name }}"
+
           be_ssl_encryption: enabled
           secure_renegotiation: 5
           fe_cipher_suite: main
@@ -212,13 +292,12 @@
     #################################################################
 
     - name: Apply SSL Policy
-
       radware.radware_modules.alteon_mng_config:
 
         provider:
-          server: "{{ management_ip }}"
-          user: "{{ alteon_username }}"
-          password: "{{ alteon_password }}"
+          server: "{{ SLB_IP }}"
+          user: "{{ Username }}"
+          password: "{{ Password }}"
           validate_certs: false
           https_port: 443
 
@@ -229,14 +308,11 @@
     #################################################################
 
     - name: Save SSL Policy
-
       radware.radware_modules.alteon_mng_config:
 
         provider:
-          server: "{{ management_ip }}"
-          user: "{{ alteon_username }}"
-          password: "{{ alteon_password }}"
+          server: "{{ SLB_IP }}"
+          user: "{{ Username }}"
+          password: "{{ Password }}"
           validate_certs: false
           https_port: 443
-
-        command: save
