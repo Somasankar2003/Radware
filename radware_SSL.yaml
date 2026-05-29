@@ -96,12 +96,13 @@
     #################################################################
 
     - name: Import SSL Key
+
       radware.radware_modules.alteon_config_ssl_key:
 
         provider:
-          server: "{{ SLB_IP }}"
-          user: "{{ Username }}"
-          password: "{{ Password }}"
+          server: "{{ slb_ip }}"
+          user: "{{ username }}"
+          password: "{{ password }}"
           validate_certs: false
           https_port: 443
           ssh_port: 22
@@ -110,8 +111,9 @@
         state: present
 
         parameters:
-          index: "{{ Certificate_ID }}"
-          description: "{{ Common_Name }}"
+          index: "{{ certificate_id }}"
+          description: "{{ common_name }}"
+          passphrase: ""
           content: "{{ ssl_private_key }}"
 
     #################################################################
@@ -119,12 +121,13 @@
     #################################################################
 
     - name: Apply SSL Key
+
       radware.radware_modules.alteon_mng_config:
 
         provider:
-          server: "{{ SLB_IP }}"
-          user: "{{ Username }}"
-          password: "{{ Password }}"
+          server: "{{ slb_ip }}"
+          user: "{{ username }}"
+          password: "{{ password }}"
           validate_certs: false
           https_port: 443
 
@@ -135,12 +138,13 @@
     #################################################################
 
     - name: Save SSL Key
+
       radware.radware_modules.alteon_mng_config:
 
         provider:
-          server: "{{ SLB_IP }}"
-          user: "{{ Username }}"
-          password: "{{ Password }}"
+          server: "{{ slb_ip }}"
+          user: "{{ username }}"
+          password: "{{ password }}"
           validate_certs: false
           https_port: 443
 
@@ -151,12 +155,13 @@
     #################################################################
 
     - name: Import CSR
+
       radware.radware_modules.alteon_config_ssl_cert:
 
         provider:
-          server: "{{ SLB_IP }}"
-          user: "{{ Username }}"
-          password: "{{ Password }}"
+          server: "{{ slb_ip }}"
+          user: "{{ username }}"
+          password: "{{ password }}"
           validate_certs: false
           https_port: 443
           ssh_port: 22
@@ -165,9 +170,9 @@
         state: present
 
         parameters:
-          index: "{{ Certificate_ID }}"
+          index: "{{ certificate_id }}"
           certificate_type: certificateRequest
-          description: "{{ Common_Name }}"
+          description: "{{ common_name }}"
           content: "{{ ssl_certificate_request }}"
 
     #################################################################
@@ -175,12 +180,13 @@
     #################################################################
 
     - name: Apply CSR
+
       radware.radware_modules.alteon_mng_config:
 
         provider:
-          server: "{{ SLB_IP }}"
-          user: "{{ Username }}"
-          password: "{{ Password }}"
+          server: "{{ slb_ip }}"
+          user: "{{ username }}"
+          password: "{{ password }}"
           validate_certs: false
           https_port: 443
 
@@ -191,12 +197,13 @@
     #################################################################
 
     - name: Save CSR
+
       radware.radware_modules.alteon_mng_config:
 
         provider:
-          server: "{{ SLB_IP }}"
-          user: "{{ Username }}"
-          password: "{{ Password }}"
+          server: "{{ slb_ip }}"
+          user: "{{ username }}"
+          password: "{{ password }}"
           validate_certs: false
           https_port: 443
 
@@ -207,12 +214,13 @@
     #################################################################
 
     - name: Import Server Certificate
+
       radware.radware_modules.alteon_config_ssl_cert:
 
         provider:
-          server: "{{ SLB_IP }}"
-          user: "{{ Username }}"
-          password: "{{ Password }}"
+          server: "{{ slb_ip }}"
+          user: "{{ username }}"
+          password: "{{ password }}"
           validate_certs: false
           https_port: 443
           ssh_port: 22
@@ -221,9 +229,9 @@
         state: present
 
         parameters:
-          index: "{{ Certificate_ID }}"
+          index: "{{ certificate_id }}"
           certificate_type: serverCertificate
-          description: "{{ Common_Name }}"
+          description: "{{ common_name }}"
           content: "{{ ssl_server_certificate }}"
 
     #################################################################
@@ -231,12 +239,13 @@
     #################################################################
 
     - name: Apply Server Certificate
+
       radware.radware_modules.alteon_mng_config:
 
         provider:
-          server: "{{ SLB_IP }}"
-          user: "{{ Username }}"
-          password: "{{ Password }}"
+          server: "{{ slb_ip }}"
+          user: "{{ username }}"
+          password: "{{ password }}"
           validate_certs: false
           https_port: 443
 
@@ -247,12 +256,13 @@
     #################################################################
 
     - name: Save Server Certificate
+
       radware.radware_modules.alteon_mng_config:
 
         provider:
-          server: "{{ SLB_IP }}"
-          user: "{{ Username }}"
-          password: "{{ Password }}"
+          server: "{{ slb_ip }}"
+          user: "{{ username }}"
+          password: "{{ password }}"
           validate_certs: false
           https_port: 443
 
@@ -263,12 +273,13 @@
     #################################################################
 
     - name: Create SSL Policy
+
       radware.radware_modules.alteon_config_ssl_policy:
 
         provider:
-          server: "{{ SLB_IP }}"
-          user: "{{ Username }}"
-          password: "{{ Password }}"
+          server: "{{ slb_ip }}"
+          user: "{{ username }}"
+          password: "{{ password }}"
           validate_certs: false
           https_port: 443
           ssh_port: 22
@@ -277,8 +288,8 @@
         state: present
 
         parameters:
-          index: "{{ SSL_Policy_ID }}"
-          description: "{{ Common_Name }}"
+          index: "{{ ssl_policy_id }}"
+          description: "{{ common_name }}"
 
           be_ssl_encryption: enabled
           secure_renegotiation: 5
@@ -292,12 +303,13 @@
     #################################################################
 
     - name: Apply SSL Policy
+
       radware.radware_modules.alteon_mng_config:
 
         provider:
-          server: "{{ SLB_IP }}"
-          user: "{{ Username }}"
-          password: "{{ Password }}"
+          server: "{{ slb_ip }}"
+          user: "{{ username }}"
+          password: "{{ password }}"
           validate_certs: false
           https_port: 443
 
@@ -308,11 +320,15 @@
     #################################################################
 
     - name: Save SSL Policy
+
       radware.radware_modules.alteon_mng_config:
 
         provider:
-          server: "{{ SLB_IP }}"
-          user: "{{ Username }}"
-          password: "{{ Password }}"
+          server: "{{ slb_ip }}"
+          user: "{{ username }}"
+          password: "{{ password }}"
           validate_certs: false
           https_port: 443
+
+        command: save
+
