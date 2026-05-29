@@ -2,26 +2,35 @@
 - name: Configure Alteon Dynamic Real Servers and Server Group
   hosts: localhost
   gather_facts: false
+
   vars:
     _raw_new_ips: "{{ real_server_ips | default('') | trim }}"
     _raw_existing: "{{ existing_server_names | default('') | trim }}"
 
   tasks:
+
     #################################################################
-    # Parse Survey Inputs into Clean Lists
+    # Parse Survey Inputs
     #################################################################
+
     - name: Parse survey inputs into clean lists
       set_fact:
+
         new_server_ip_list: >-
           {{
             [] if (_raw_new_ips == '' or _raw_new_ips == None)
             else _raw_new_ips.split(',') | map('trim') | select() | list
           }}
+
         existing_server_name_list: >-
           {{
             [] if (_raw_existing == '' or _raw_existing == None)
             else _raw_existing.split(',') | map('trim') | select() | list
           }}
+
+    #################################################################
+    # Debug Parsed Lists
+    #################################################################
 
     - name: Debug parsed lists
       debug:
@@ -31,21 +40,24 @@
           - "group_mode                : {{ group_mode }}"
 
     #################################################################
-    # Validate - at least one input must be provided
+    # Validate Input
     #################################################################
+
     - name: Validate inputs
       assert:
         that:
           - (new_server_ip_list | length > 0) or (existing_server_name_list | length > 0)
         fail_msg: >
-          You must supply at least one value in
-          'real_server_ips' or 'existing_server_names'.
+          You must provide at least one value in:
+          real_server_ips OR existing_server_names
 
     #################################################################
-    # Determine starting index for new real-server naming
+    # Calculate Starting Index
     #################################################################
+
     - name: Calculate starting index for new servers
       set_fact:
+
         rs_start_index: >-
           {{
             (
@@ -60,15 +72,14 @@
             ) + 1
           }}
 
-    - name: Debug starting index
-      debug:
-        msg: "rs_start_index : {{ rs_start_index }}"
+    #################################################################
+    # Create New Real Servers
+    #################################################################
 
-    #################################################################
-    # Create NEW Real Servers
-    #################################################################
     - name: Create New Real Servers
+
       radware.radware_modules.alteon_config_server:
+
         provider:
           server: "{{ management_ip }}"
           user: "{{ alteon_username }}"
@@ -77,27 +88,36 @@
           https_port: 443
           ssh_port: 22
           timeout: 5
+
         state: present
+
         parameters:
           index: "rs{{ rs_start_index | int + ansible_loop.index0 }}"
           state: enabled
           ip_address: "{{ item }}"
           weight: 7
           availability: 5
+
           server_ports:
             - 80
             - 8080
             - 8081
+
       loop: "{{ new_server_ip_list }}"
+
       loop_control:
         extended: true
-      when: new_server_ip_list | length > 0
+
+      when:
+        - new_server_ip_list | length > 0
 
     #################################################################
-    # Build name list for newly created servers
+    # Build Newly Created Server Names
     #################################################################
+
     - name: Build New Server Name List
       set_fact:
+
         new_server_names: >-
           {{
             range(
@@ -108,29 +128,46 @@
             | map('regex_replace', '^(.*)$', 'rs\1')
             | list
           }}
-      when: new_server_ip_list | length > 0
+
+      when:
+        - new_server_ip_list | length > 0
+
+    #################################################################
+    # Default Empty New Server List
+    #################################################################
 
     - name: Default New Server Name List to empty
       set_fact:
         new_server_names: []
-      when: new_server_ip_list | length == 0
+
+      when:
+        - new_server_ip_list | length == 0
 
     #################################################################
-    # Merge: existing server names + newly created server names
+    # Merge Existing + New Server Names
     #################################################################
+
     - name: Build Final Combined Server List
       set_fact:
         final_server_names: "{{ existing_server_name_list + new_server_names }}"
 
-    - name: Debug final server list before group task
+    #################################################################
+    # Debug Final Server List
+    #################################################################
+
+    - name: Debug final server list
       debug:
-        msg: "final_server_names : {{ final_server_names }}"
+        msg:
+          - "final_server_names : {{ final_server_names }}"
 
     #################################################################
-    # Fetch current group members when attaching to EXISTING group
+    # Fetch Existing Group Information
     #################################################################
+
     - name: Fetch Existing Group Configuration
+
       radware.radware_modules.alteon_config_server_group:
+
         provider:
           server: "{{ management_ip }}"
           user: "{{ alteon_username }}"
@@ -139,34 +176,49 @@
           https_port: 443
           ssh_port: 22
           timeout: 5
+
         state: gather_facts
+
         parameters:
           index: "{{ server_group_name }}"
+
       register: existing_group_info
+
       ignore_errors: true
-      when: group_mode | lower == 'existing'
+
+      when:
+        - group_mode | lower == 'existing'
 
     #################################################################
-    # Merge current group members with our final list (dedup)
+    # Merge Existing Group Members
     #################################################################
+
     - name: Merge Existing Group Members into Final List
       set_fact:
+
         final_server_names: >-
           {{
             (
-              (existing_group_info.msg.server_names | default([]))
+              (
+                existing_group_info.ansible_facts.server_names
+                | default([])
+              )
               + final_server_names
             ) | unique | list
           }}
+
       when:
         - group_mode | lower == 'existing'
         - existing_group_info is not failed
 
     #################################################################
-    # Create / Update the Server Group
+    # Create Empty Server Group First
     #################################################################
-    - name: Create or Update Server Group
+
+    - name: Create Empty Server Group
+
       radware.radware_modules.alteon_config_server_group:
+
         provider:
           server: "{{ management_ip }}"
           user: "{{ alteon_username }}"
@@ -175,7 +227,50 @@
           https_port: 443
           ssh_port: 22
           timeout: 5
+
         state: present
+
+        parameters:
+          index: "{{ server_group_name }}"
+          slb_metric: "{{ slb_metric }}"
+          persist_overload_max_conn_server: enabled
+
+    #################################################################
+    # Apply Empty Group
+    #################################################################
+
+    - name: Apply Empty Group
+
+      radware.radware_modules.alteon_mng_config:
+
+        provider:
+          server: "{{ management_ip }}"
+          user: "{{ alteon_username }}"
+          password: "{{ alteon_password }}"
+          validate_certs: false
+          https_port: 443
+
+        command: apply
+
+    #################################################################
+    # Attach Servers to Group
+    #################################################################
+
+    - name: Attach Servers to Group
+
+      radware.radware_modules.alteon_config_server_group:
+
+        provider:
+          server: "{{ management_ip }}"
+          user: "{{ alteon_username }}"
+          password: "{{ alteon_password }}"
+          validate_certs: false
+          https_port: 443
+          ssh_port: 22
+          timeout: 5
+
+        state: present
+
         parameters:
           index: "{{ server_group_name }}"
           slb_metric: "{{ slb_metric }}"
@@ -185,33 +280,43 @@
     #################################################################
     # Apply Alteon Configuration
     #################################################################
+
     - name: Apply Alteon Configuration
+
       radware.radware_modules.alteon_mng_config:
+
         provider:
           server: "{{ management_ip }}"
           user: "{{ alteon_username }}"
           password: "{{ alteon_password }}"
           validate_certs: false
           https_port: 443
+
         command: apply
 
     #################################################################
     # Save Alteon Configuration
     #################################################################
+
     - name: Save Alteon Configuration
+
       radware.radware_modules.alteon_mng_config:
+
         provider:
           server: "{{ management_ip }}"
           user: "{{ alteon_username }}"
           password: "{{ alteon_password }}"
           validate_certs: false
           https_port: 443
+
         command: save
 
     #################################################################
     # Final Output
     #################################################################
+
     - name: Display Final Result
+
       debug:
         msg:
           - "Group Mode             : {{ group_mode }}"
