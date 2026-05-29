@@ -113,7 +113,7 @@
         parameters:
           index: "{{ certificate_id }}"
           description: "{{ common_name }}"
-          passphrase: ""
+          passphrase: "test1234"
           content: "{{ ssl_private_key }}"
 
     #################################################################
