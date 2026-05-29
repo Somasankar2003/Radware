@@ -21,6 +21,15 @@
           }}
 
     #################################################################
+    # Initialize Server Lists
+    #################################################################
+
+    - name: Initialize Server Lists
+      set_fact:
+        existing_server_names: []
+        new_server_ip_list: []
+
+    #################################################################
     # Separate Existing Servers and New IPs
     #################################################################
 
@@ -29,17 +38,19 @@
 
         existing_server_names: >-
           {{
-            parsed_real_servers
-            | select('match', '^rs[0-9]+$')
-            | list
+            existing_server_names + [ item ]
+            if item.startswith('rs')
+            else existing_server_names
           }}
 
         new_server_ip_list: >-
           {{
-            parsed_real_servers
-            | reject('match', '^rs[0-9]+$')
-            | list
+            new_server_ip_list + [ item ]
+            if not item.startswith('rs')
+            else new_server_ip_list
           }}
+
+      loop: "{{ parsed_real_servers }}"
 
     #################################################################
     # Debug Parsed Inputs
