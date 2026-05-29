@@ -1,0 +1,265 @@
+---
+- name: Configure Alteon SSL Repository and SSL Policy
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+
+    #################################################################
+    # Generate SSL Key
+    #################################################################
+
+    - name: Generate SSL Key
+
+      radware.radware_alteon.alteon_config_ssl_key:
+
+        provider:
+          server: "{{ management_ip }}"
+          user: "{{ alteon_username }}"
+          password: "{{ alteon_password }}"
+          validate_certs: false
+          https_port: 443
+          ssh_port: 22
+          timeout: 5
+
+        state: present
+
+        parameters:
+          index: "{{ certificate_id }}"
+          description: "{{ common_name }}"
+          key_type: rsa
+          key_size: 2048
+
+    #################################################################
+    # Apply Configuration After SSL Key
+    #################################################################
+
+    - name: Apply Alteon Configuration - SSL Key
+
+      radware.radware_modules.alteon_mng_config:
+
+        provider:
+          server: "{{ management_ip }}"
+          user: "{{ alteon_username }}"
+          password: "{{ alteon_password }}"
+          validate_certs: false
+          https_port: 443
+
+        command: apply
+
+    #################################################################
+    # Save Configuration After SSL Key
+    #################################################################
+
+    - name: Save Alteon Configuration - SSL Key
+
+      radware.radware_modules.alteon_mng_config:
+
+        provider:
+          server: "{{ management_ip }}"
+          user: "{{ alteon_username }}"
+          password: "{{ alteon_password }}"
+          validate_certs: false
+          https_port: 443
+
+        command: save
+
+    #################################################################
+    # Generate Certificate Request (CSR)
+    #################################################################
+
+    - name: Generate SSL Certificate Request
+
+      radware.radware_alteon.alteon_config_ssl_cert:
+
+        provider:
+          server: "{{ management_ip }}"
+          user: "{{ alteon_username }}"
+          password: "{{ alteon_password }}"
+          validate_certs: false
+          https_port: 443
+          ssh_port: 22
+          timeout: 5
+
+        state: present
+
+        parameters:
+          index: "{{ certificate_id }}"
+          certificate_type: certificateRequest
+          description: "{{ common_name }}"
+
+    #################################################################
+    # Apply Configuration After CSR
+    #################################################################
+
+    - name: Apply Alteon Configuration - CSR
+
+      radware.radware_modules.alteon_mng_config:
+
+        provider:
+          server: "{{ management_ip }}"
+          user: "{{ alteon_username }}"
+          password: "{{ alteon_password }}"
+          validate_certs: false
+          https_port: 443
+
+        command: apply
+
+    #################################################################
+    # Save Configuration After CSR
+    #################################################################
+
+    - name: Save Alteon Configuration - CSR
+
+      radware.radware_modules.alteon_mng_config:
+
+        provider:
+          server: "{{ management_ip }}"
+          user: "{{ alteon_username }}"
+          password: "{{ alteon_password }}"
+          validate_certs: false
+          https_port: 443
+
+        command: save
+
+    #################################################################
+    # Generate Server Certificate
+    #################################################################
+
+    - name: Generate Server Certificate
+
+      radware.radware_alteon.alteon_config_ssl_cert:
+
+        provider:
+          server: "{{ management_ip }}"
+          user: "{{ alteon_username }}"
+          password: "{{ alteon_password }}"
+          validate_certs: false
+          https_port: 443
+          ssh_port: 22
+          timeout: 5
+
+        state: present
+
+        parameters:
+          index: "{{ certificate_id }}"
+          certificate_type: serverCertificate
+          description: "{{ common_name }}"
+
+    #################################################################
+    # Apply Configuration After Server Certificate
+    #################################################################
+
+    - name: Apply Alteon Configuration - Server Certificate
+
+      radware.radware_modules.alteon_mng_config:
+
+        provider:
+          server: "{{ management_ip }}"
+          user: "{{ alteon_username }}"
+          password: "{{ alteon_password }}"
+          validate_certs: false
+          https_port: 443
+
+        command: apply
+
+    #################################################################
+    # Save Configuration After Server Certificate
+    #################################################################
+
+    - name: Save Alteon Configuration - Server Certificate
+
+      radware.radware_modules.alteon_mng_config:
+
+        provider:
+          server: "{{ management_ip }}"
+          user: "{{ alteon_username }}"
+          password: "{{ alteon_password }}"
+          validate_certs: false
+          https_port: 443
+
+        command: save
+
+    #################################################################
+    # Create SSL Policy
+    #################################################################
+
+    - name: Create SSL Policy
+
+      radware.radware_alteon.alteon_config_ssl_policy:
+
+        provider:
+          server: "{{ management_ip }}"
+          user: "{{ alteon_username }}"
+          password: "{{ alteon_password }}"
+          validate_certs: false
+          https_port: 443
+          ssh_port: 22
+          timeout: 5
+
+        state: present
+
+        parameters:
+          index: "{{ ssl_policy_id }}"
+
+          be_ssl_encryption: enabled
+
+          secure_renegotiation: 5
+
+          fe_cipher_suite: main
+
+          be_hw_offload_rsa: disabled
+
+          pass_ssl_info_add_front_end_https_header: enabled
+
+          fe_intermediate_ca_chain_type: none
+
+    #################################################################
+    # Apply SSL Policy
+    #################################################################
+
+    - name: Apply Alteon Configuration - SSL Policy
+
+      radware.radware_modules.alteon_mng_config:
+
+        provider:
+          server: "{{ management_ip }}"
+          user: "{{ alteon_username }}"
+          password: "{{ alteon_password }}"
+          validate_certs: false
+          https_port: 443
+
+        command: apply
+
+    #################################################################
+    # Save SSL Policy
+    #################################################################
+
+    - name: Save Alteon Configuration - SSL Policy
+
+      radware.radware_modules.alteon_mng_config:
+
+        provider:
+          server: "{{ management_ip }}"
+          user: "{{ alteon_username }}"
+          password: "{{ alteon_password }}"
+          validate_certs: false
+          https_port: 443
+
+        command: save
+
+    #################################################################
+    # Final Output
+    #################################################################
+
+    - name: Display Final Result
+
+      debug:
+        msg:
+          - "SSL Key Generated Successfully"
+          - "CSR Generated Successfully"
+          - "Server Certificate Generated Successfully"
+          - "SSL Policy Created Successfully"
+          - "Certificate ID : {{ certificate_id }}"
+          - "Common Name : {{ common_name }}"
+          - "SSL Policy ID : {{ ssl_policy_id }}"
