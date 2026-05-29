@@ -239,3 +239,4 @@
           validate_certs: false
           https_port: 443
 
+        command: save
